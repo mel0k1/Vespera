@@ -66,7 +66,6 @@
   "Offline name": "Офлайн-имя",
   "Offline name · plays": "Офлайн-имя · играет",
   "A name, 3 to 16 letters": "Имя, от 3 до 16 букв",
-  "Play offline under another name, and switch from the top bar. Online servers don't take offline names.": "Играйте офлайн под другим именем и переключайтесь в верхней панели. Онлайн-серверы не принимают офлайн-имена.",
   "Add": "Добавить",
   "Skin…": "Скин…",
   "Forget": "Забыть",
@@ -186,5 +185,6 @@
   "These mods will run with full access to your computer": "Эти моды получат полный доступ к вашему компьютеру",
   "They can read, change or delete your files, and use your accounts and network, like any program you run. Build them only if you trust their authors: the Mods page names them.": "Они могут читать, изменять и удалять ваши файлы, использовать ваши аккаунты и сеть, как любая запущенная вами программа. Собирайте их, только если доверяете авторам: они указаны на странице «Моды».",
   "Mods: {mods}": "Моды: {mods}",
-  "The build compiles the game: about ten minutes and a few GB of disk the first time, a few minutes after that.": "Сборка компилирует игру: около десяти минут и несколько ГБ на диске в первый раз, потом несколько минут."
+  "The build compiles the game: about ten minutes and a few GB of disk the first time, a few minutes after that.": "Сборка компилирует игру: около десяти минут и несколько ГБ на диске в первый раз, потом несколько минут.",
+  "Play offline under another name, and switch from the bottom bar. Online servers don't take offline names.": "Играйте офлайн под другим именем и переключайтесь в нижней панели. Онлайн-серверы не принимают офлайн-имена."
 }

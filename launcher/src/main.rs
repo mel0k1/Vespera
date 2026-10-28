@@ -1,4 +1,4 @@
-//! Horizon launcher: installs Horizon builds, prepares them from the player's own Minecraft,
+//! Vespera launcher: installs Horizon builds, prepares them from the player's own Minecraft,
 //! and starts the client or a dedicated server.
 
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
@@ -13,6 +13,7 @@ mod console;
 mod console_page;
 mod cull;
 mod datapacks_page;
+mod dock;
 mod export_page;
 mod game_tools;
 mod import_page;
@@ -90,7 +91,7 @@ impl Page {
         }
     }
 
-    /// Every page, with its name and icon: the top bar shows all but Settings, which has its
+    /// Every page, with its name and icon: the dock shows all but Settings, which has its
     /// own button.
     const ALL: [(Page, &'static str, &'static str); 6] = [
         (Page::Play, "Home", "home"),
@@ -184,7 +185,7 @@ struct Launcher {
     native_confirm: Option<Result<Vec<native_mods::Bundle>, String>>,
     confirm_remove: Option<String>,
     picker_open: bool,
-    /// The top bar's quick switch of who plays (`switch_page.rs`).
+    /// The dock's quick switch of who plays (`switch_page.rs`).
     account_menu: bool,
     /// Settings > Account's skin panel for an offline name (`skin_page.rs`).
     skin: Option<skin_page::SkinPanel>,
@@ -286,7 +287,7 @@ struct Launcher {
     aside: while_playing::Aside,
     /// The selected instance's desktop shortcut (`shortcut_page.rs`).
     shortcuts: shortcut_page::Shortcuts,
-    /// The name the game made up for an offline player (`horizon-player.txt`), for the top bar.
+    /// The name the game made up for an offline player (`horizon-player.txt`), for the dock.
     offline_name: Option<String>,
     /// The player's servers, for the sidebar until the Servers page has read them.
     side_servers: Vec<vespera_launcher::servers::Entry>,
@@ -1703,6 +1704,9 @@ fn megabytes(bytes: u64) -> String {
 impl Launcher {
     /// The top bar: the mark and name over the sidebar (in the title bar on Windows and Linux
     /// client-side decorations), the pages with their icons, then the account and Settings.
+    /// Vespera renders the floating dock (`dock.rs`) instead; this stays so upstream edits to
+    /// it still merge.
+    #[allow(dead_code)]
     fn topbar(&mut self, window: &Window, cx: &mut Context<Self>) -> Div {
         let t = self.theme;
         let mut nav = div().flex().flex_none().h_full().gap(px(2.));
@@ -4072,7 +4076,7 @@ impl Render for Launcher {
             window.focus(&self.root_focus);
         }
         let stone = self.art.stone(t.page_rgb, t.dark, window.scale_factor());
-        let topbar = self.topbar(window, cx);
+        let dock = self.dock(window, cx);
         let sidebar = self.sidebar(window, cx);
         let mut root = div()
             .id("root")
@@ -4116,35 +4120,45 @@ impl Render for Launcher {
                     .size_full()
                     .opacity(ui)
                     .top(px(theme::RISE * (1. - ui)))
-                    .child(topbar)
                     .child(
+                        // Vespera: the sidebar keeps its full height and the dock floats over
+                        // the content's bottom edge (dock.rs).
                         div().flex().flex_1().min_h_0().child(sidebar).child(
-                            self.content_scroll
-                                .wrap(
-                                    div()
-                                        .id("content")
-                                        .relative()
-                                        .flex_1()
-                                        .min_h_0()
-                                        .overflow_y_scroll()
-                                        .child(
-                                            div()
-                                                .flex()
-                                                .w_full()
-                                                .min_w_0()
-                                                .px(px(theme::PAGE_GUTTER))
-                                                .pt(px(if self.page == Page::Play {
-                                                    0.
-                                                } else {
-                                                    28.
-                                                }))
-                                                .pb(px(48.))
-                                                .child(content),
-                                        ),
-                                    &t,
-                                )
+                            div()
+                                .relative()
+                                .flex()
                                 .flex_1()
-                                .min_w_0(),
+                                .min_w_0()
+                                .min_h_0()
+                                .child(
+                                    self.content_scroll
+                                        .wrap(
+                                            div()
+                                                .id("content")
+                                                .relative()
+                                                .flex_1()
+                                                .min_h_0()
+                                                .overflow_y_scroll()
+                                                .child(
+                                                    div()
+                                                        .flex()
+                                                        .w_full()
+                                                        .min_w_0()
+                                                        .px(px(theme::PAGE_GUTTER))
+                                                        .pt(px(if self.page == Page::Play {
+                                                            0.
+                                                        } else {
+                                                            28.
+                                                        }))
+                                                        .pb(px(92.))
+                                                        .child(content),
+                                                ),
+                                            &t,
+                                        )
+                                        .flex_1()
+                                        .min_w_0(),
+                                )
+                                .child(dock),
                         ),
                     ),
             );

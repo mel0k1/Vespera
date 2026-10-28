@@ -112,18 +112,19 @@ cargo run --release
 
 ## For maintainers
 
-Publishing releases end to end needs three repository settings ([docs/security.md](docs/security.md), [docs/microsoft-account.md](docs/microsoft-account.md)):
+Publishing releases is wired end to end ([docs/security.md](docs/security.md), [docs/upstream-sync.md](docs/upstream-sync.md)):
 
-- **Release signing:** generate an Ed25519 key pair, put the public key in `crates/horizon-release-sign/release-keys.txt`, keep the private key as the release workflow's secret; `tools/ci/sign_release.sh` signs a release's checksums.
-- **Microsoft sign-in:** a Azure app client id as the `HORIZON_MSA_CLIENT_ID` repository variable (unset, the launcher says sign-in is not configured).
+- **Release signing (done):** the `release` environment holds `RELEASE_SIGNING_KEY`, the private half of the Ed25519 pair whose public half is `crates/horizon-release-sign/release-keys.txt`; `tools/ci/sign_release.sh` signs a release's checksums, and every download checks them. To rotate: add a new public key as a second line, set the new private key as `RELEASE_SIGNING_KEY_NEXT`, release once, then swap the two secrets.
+- **Microsoft sign-in:** the launcher reads `HORIZON_MSA_CLIENT_ID` ([docs/microsoft-account.md](docs/microsoft-account.md)). Register your own Azure app, allow public client flows, then set the repository variable: `gh variable set HORIZON_MSA_CLIENT_ID --body "<client-id>"`. Unset, the launcher says sign-in is not configured.
 - **CurseForge search (optional):** an API key as the `HORIZON_CURSEFORGE_API_KEY` secret. Without it, the mod browser searches Modrinth only.
-- macOS builds want a signed runner (`MAC_RUNNER` variable) and, for notarization, `MACOS_SIGN_IDENTITY`.
+- **macOS builds:** `MAC_RUNNER` is set to `macos-latest`; for notarization, set `MACOS_SIGN_IDENTITY`. The automatic release trains are paused (`RELEASES_PAUSED=1`); change the variable to run them.
+- **Upstream sync:** a weekly workflow merges Horizon's main into ours; the policy is in [docs/upstream-sync.md](docs/upstream-sync.md).
 
 ## Roadmap
 
 - **Now:** keep the fork in sync with upstream Horizon, ship the first signed launcher and game releases here.
 - **Next:** Vespera's own visual identity in-game, its own mod registry, a website.
-- **UI:** the launcher's GPUI interface is planned to move to **Flutter**, keeping the Rust core (`vespera_launcher` lib, CLI and MCP) untouched.
+- **UI:** the launcher stays on GPUI; its navigation lives in the floating dock (`launcher/src/dock.rs`).
 
 ## Credits
 

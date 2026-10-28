@@ -1,5 +1,6 @@
-# The public keys Horizon's releases are signed with (docs/security.md, "Signed updates"): one base64 Ed25519
+# The public keys Vespera's releases are signed with (docs/security.md, "Signed updates"): one base64 Ed25519
 # key per line. The launcher and horizon-server build these in and refuse a download no key here signed.
 # The private keys exist only as the RELEASE_SIGNING_KEY secret(s) of the repository's `release` environment.
-# Changing this file needs Ludovic's review (.github/CODEOWNERS).
-MU4oiIQcCxkZvbwSjjXs7SySCuM6ywRQ3nGaJYZG0gw=
+# Vespera: mel0k1's own key, generated at the fork. Horizon's key was not carried over, so only this
+# repository signs for this launcher. Changing this file needs the maintainer's review (.github/CODEOWNERS).
+EG56GaokMzu/uQEVYMCgjBPoWZpzrC8s9bH14kDQwSQ=

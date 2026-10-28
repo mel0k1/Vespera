@@ -66,7 +66,6 @@
   "Offline name": "Nom hors ligne",
   "Offline name · plays": "Nom hors ligne · joue",
   "A name, 3 to 16 letters": "Un nom, de 3 à 16 lettres",
-  "Play offline under another name, and switch from the top bar. Online servers don't take offline names.": "Jouez hors ligne sous un autre nom, et changez depuis la barre du haut. Les serveurs en ligne n'acceptent pas les noms hors ligne.",
   "Add": "Ajouter",
   "Skin…": "Skin…",
   "Forget": "Oublier",
@@ -186,5 +185,6 @@
   "These mods will run with full access to your computer": "Ces mods auront un accès complet à votre ordinateur",
   "They can read, change or delete your files, and use your accounts and network, like any program you run. Build them only if you trust their authors: the Mods page names them.": "Ils peuvent lire, modifier ou supprimer vos fichiers, et utiliser vos comptes et votre réseau, comme tout programme que vous lancez. Ne les compilez que si vous faites confiance à leurs auteurs : la page Mods les nomme.",
   "Mods: {mods}": "Mods : {mods}",
-  "The build compiles the game: about ten minutes and a few GB of disk the first time, a few minutes after that.": "La compilation construit le jeu : une dizaine de minutes et quelques Go de disque la première fois, quelques minutes ensuite."
+  "The build compiles the game: about ten minutes and a few GB of disk the first time, a few minutes after that.": "La compilation construit le jeu : une dizaine de minutes et quelques Go de disque la première fois, quelques minutes ensuite.",
+  "Play offline under another name, and switch from the bottom bar. Online servers don't take offline names.": "Jouez hors ligne sous un autre nom, et changez depuis la barre du bas. Les serveurs en ligne n'acceptent pas les noms hors ligne."
 }

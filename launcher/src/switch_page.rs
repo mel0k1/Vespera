@@ -1,4 +1,4 @@
-//! Who plays: the top bar's quick switch (a menu under the account chip) and Settings' offline
+//! Who plays: the dock's quick switch (a menu over the account chip) and Settings' offline
 //! names (`vespera_launcher::account::Accounts::offline`).
 use super::servers_page::Field;
 use super::*;
@@ -62,7 +62,7 @@ impl Launcher {
         out
     }
 
-    /// The menu under the account chip, while open.
+    /// The menu over the account chip (the dock sits at the bottom), while open.
     pub(super) fn account_menu(&self, cx: &mut Context<Self>) -> Option<impl IntoElement> {
         if !self.account_menu {
             return None;
@@ -72,7 +72,7 @@ impl Launcher {
         let mut menu = div()
             .id("account-menu")
             .absolute()
-            .top(px(46.))
+            .bottom(px(46.))
             .right_0()
             .w(px(280.))
             .p(px(6.))
@@ -230,7 +230,7 @@ impl Launcher {
             Some(
                 div()
                     .child(tr(
-                        "Play offline under another name, and switch from the top bar. Online \
+                        "Play offline under another name, and switch from the bottom bar. Online \
                          servers don't take offline names.",
                     ))
                     .into_any_element(),

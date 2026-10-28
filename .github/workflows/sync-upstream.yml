@@ -1,0 +1,58 @@
+# Vespera: merges Horizon's main into ours, weekly or on demand, so their engine updates keep
+# flowing in (docs/upstream-sync.md). A clean merge pushes straight to main. On conflicts the
+# merge aborts and an issue lists the files that need hands. A push made with GITHUB_TOKEN does
+# not start other workflows: run the checks job by hand after an automatic merge.
+name: sync upstream
+on:
+  schedule:
+    - cron: "23 4 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Merge upstream/main
+        id: merge
+        run: |
+          git config user.name "vespera-sync"
+          git config user.email "actions@users.noreply.github.com"
+          git remote add upstream https://github.com/horizon-rust/horizon.git
+          git fetch upstream main
+          if git merge --no-edit upstream/main; then
+            git push origin HEAD:main
+            echo "conflicts=" >> "$GITHUB_OUTPUT"
+          else
+            git diff --name-only --diff-filter=U > conflicted.txt || true
+            git merge --abort
+            {
+              echo "conflicts<<EOF"
+              cat conflicted.txt
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open an issue when the merge needs hands
+        if: steps.merge.outputs.conflicts != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const files = `${{ steps.merge.outputs.conflicts }}`.trim();
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: "Upstream merge needs hands",
+              body:
+                "The weekly merge of horizon-rust/horizon hit conflicts in:\n\n" +
+                files.split("\n").map((f) => "- `" + f + "`").join("\n") +
+                "\n\nResolve per docs/upstream-sync.md: engine files take theirs, Vespera's identity files keep ours. Then push the merge.",
+            });

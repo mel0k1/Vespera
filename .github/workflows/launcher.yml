@@ -239,8 +239,10 @@ jobs:
             else
               (cd dist && 7z a ../out/${{ matrix.asset }} ${{ matrix.binary }})
               # The Windows installer (NSIS) wraps the same static binary: per-user, shortcuts,
-              # an uninstaller (packaging/windows). The zip stays for self-update.
+              # an uninstaller (packaging/windows). The zip stays for self-update. Chocolatey
+              # does not touch this shell's PATH: NSIS's own folder is added here.
               command -v makensis > /dev/null || choco install nsis -y --no-progress
+              command -v makensis > /dev/null || export PATH="$PATH:/c/Program Files (x86)/NSIS"
               version=${HORIZON_LAUNCHER_VERSION:-$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)}
               (cd .. && makensis -DXVERSION="$version" packaging/windows/installer.nsi)
             fi

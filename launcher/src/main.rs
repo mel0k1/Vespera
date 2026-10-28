@@ -140,6 +140,9 @@ fn ease_out_cubic(x: f32) -> f32 {
     horizon_theme::ease_out_cubic(x)
 }
 
+/// How far a new page slides sideways as it arrives: from the side its tab sits on in the dock.
+const TAB_SLIDE: f32 = 20.;
+
 enum Load<T> {
     Loading,
     Ready(T),
@@ -153,6 +156,8 @@ struct Launcher {
     page: Page,
     /// How many times the page changed, for the page transition.
     switches: usize,
+    /// The direction of the last page change: 1 rightward through the dock's tabs, -1 leftward.
+    page_dir: i32,
     content_scroll: Scrollbar,
     /// The rows of the page's long list (Versions, Patch notes) last drawn.
     long_list: cull::Cull,
@@ -371,6 +376,7 @@ impl Launcher {
             theme: Theme::for_appearance(settings.appearance, settings.accent, window.appearance()),
             page: Page::from_env(),
             switches: 0,
+            page_dir: 0,
             content_scroll: Scrollbar::default(),
             long_list: cull::Cull::default(),
             opening: (!settings.skip_opening).then(|| {
@@ -505,6 +511,8 @@ impl Launcher {
         // The game may have made up a name since: read it again (a small file, once a switch).
         self.offline_name = offline_name();
         if page != self.page {
+            let at = |p: Page| Page::ALL.iter().position(|(q, _, _)| *q == p).unwrap_or(0);
+            self.page_dir = (at(page) as i32 - at(self.page) as i32).signum();
             self.page = page;
             self.switches += 1;
             self.content_scroll = Scrollbar::default();
@@ -1222,8 +1230,18 @@ static HOVER: Mutex<HoverState> = Mutex::new(HoverState {
 });
 
 fn track_hover(el: Stateful<Div>, id: SharedString) -> Stateful<Div> {
+    track_hover_in(&HOVER, el, id)
+}
+
+/// The same, against a given state. Elements that nest others which track the global one (the
+/// dock plate wraps the tabs) hold their own, so the two do not fight over the single slot.
+fn track_hover_in(
+    state: &'static Mutex<HoverState>,
+    el: Stateful<Div>,
+    id: SharedString,
+) -> Stateful<Div> {
     el.on_hover(move |hovered, window, _| {
-        let mut state = HOVER.lock().unwrap();
+        let mut state = state.lock().unwrap();
         let is_on = state.on.as_ref().is_some_and(|(h, _)| *h == id);
         if *hovered && !is_on {
             state.off = state.on.take();
@@ -4062,7 +4080,8 @@ impl Render for Launcher {
             Page::Settings => self.settings_page(cx),
         };
         self.art.free_replaced(window);
-        // The new page fades in and rises a few pixels.
+        // The new page fades in, rises a few pixels and slides in from the side its tab sits on.
+        let dir = self.page_dir as f32;
         let content = div()
             .relative()
             .w_full()
@@ -4072,7 +4091,11 @@ impl Render for Launcher {
             .with_animation(
                 ElementId::named_usize("page", self.switches),
                 Animation::new(theme::ENTER).with_easing(ease_out_quint()),
-                |d, p| d.opacity(p).top(px(theme::RISE * (1. - p))),
+                move |d, p| {
+                    d.opacity(p)
+                        .top(px(theme::RISE * (1. - p)))
+                        .left(px(TAB_SLIDE * dir * (1. - p)))
+                },
             );
         let (reveal, held) = self.opening_phase(window);
         let ui = ease_out_cubic((reveal - 0.3) / 0.7);

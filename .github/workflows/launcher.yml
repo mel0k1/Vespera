@@ -231,6 +231,11 @@ jobs:
               (cd dist && tar czf ../out/${{ matrix.asset }} ${{ matrix.binary }})
             else
               (cd dist && 7z a ../out/${{ matrix.asset }} ${{ matrix.binary }})
+              # The Windows installer (NSIS) wraps the same static binary: per-user, shortcuts,
+              # an uninstaller (packaging/windows). The zip stays for self-update.
+              command -v makensis > /dev/null || choco install nsis -y --no-progress
+              version=${HORIZON_LAUNCHER_VERSION:-$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)}
+              (cd .. && makensis -DXVERSION="$version" packaging/windows/installer.nsi)
             fi
           fi
           ls -l out

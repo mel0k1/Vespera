@@ -12,11 +12,66 @@ const PLATE: f32 = 14.;
 /// The rounding of the pills inside it, one step quieter.
 const PILL: f32 = 10.;
 
+/// The plate's own hover state. It nests the tabs, which track the global one, and the single
+/// slot there would forget the plate the moment a tab is touched (track_hover_in).
+static PLATE_HOVER: Mutex<HoverState> = Mutex::new(HoverState {
+    on: None,
+    off: None,
+});
+
+/// A tab that just became active arrives: the accent wash fades in over [`theme::QUICK`], the
+/// edge bar wipes in over [`theme::MOVE`]. Keyed by the switch count, so it plays once per
+/// change and holds at rest afterwards; `edge` is where the bar sits inside the pill.
+fn tab_arrivals(label: &str, switches: usize, t: Theme, edge: f32) -> [AnyElement; 2] {
+    let wash = t.accent.opacity(if t.dark { 0.14 } else { 0.12 });
+    [
+        div()
+            .absolute()
+            .inset_0()
+            .rounded(px(PILL))
+            .with_animation(
+                ElementId::named_usize(format!("wash-{label}"), switches),
+                Animation::new(theme::QUICK).with_easing(ease_out_quint()),
+                move |d, p| d.bg(wash.opacity(wash.a * p)),
+            )
+            .into_any_element(),
+        div()
+            .absolute()
+            .left(px(edge))
+            .right(px(edge))
+            .bottom_0()
+            .child(div().h(px(3.)).rounded_full().bg(t.accent).with_animation(
+                ElementId::named_usize(format!("bar-{label}"), switches),
+                Animation::new(theme::MOVE).with_easing(ease_out_quint()),
+                |d, p| d.w(relative(p)),
+            ))
+            .into_any_element(),
+    ]
+}
+
+/// The plate's shadows, from rest (k 0) to the hovered lift (k 1): a little wider and darker,
+/// as if the plate rose toward the pointer. The colour stays the theme's outline, so the lift
+/// reads as a shade of the palette in both appearances.
+fn plate_shadows(t: Theme, k: f32) -> Vec<gpui::BoxShadow> {
+    let at = |rest: f32, up: f32| rest + (up - rest) * k;
+    let one = |dy: f32, blur: f32, spread: f32, a: f32| gpui::BoxShadow {
+        color: t.outline.opacity(a),
+        offset: gpui::point(px(0.), px(dy)),
+        blur_radius: px(blur),
+        spread_radius: px(spread),
+    };
+    vec![
+        one(at(14., 19.), at(36., 48.), at(-8., -7.), at(0.30, 0.42)),
+        one(at(3., 4.), at(10., 14.), at(-3., -2.), at(0.20, 0.28)),
+    ]
+}
+
 impl Launcher {
     /// The dock at the bottom of the content area: the wordmark (where the title bar doesn't
     /// carry it), the page tabs, then the account chip and Settings.
     pub(super) fn dock(&mut self, window: &Window, cx: &mut Context<Self>) -> Div {
         let t = self.theme;
+        let switches = self.switches;
         let mut nav = div().flex().flex_none().items_center().gap(px(4.));
         for (page, label, icon) in Page::ALL {
             if page == Page::Settings {
@@ -36,25 +91,8 @@ impl Launcher {
                 .cursor_pointer()
                 .when(active, |d| {
                     d.bg(t.raised)
-                        // A quiet accent wash (the badge's tint) lifts the tab without a border.
-                        .child(
-                            div()
-                                .absolute()
-                                .inset_0()
-                                .rounded(px(PILL))
-                                .bg(t.accent.opacity(if t.dark { 0.14 } else { 0.12 })),
-                        )
-                        // The indicator sits on the pill's lower edge, at the dock's own edge.
-                        .child(
-                            div()
-                                .absolute()
-                                .left(px(12.))
-                                .right(px(12.))
-                                .bottom_0()
-                                .h(px(3.))
-                                .rounded_full()
-                                .bg(t.accent),
-                        )
+                        // The wash and the edge bar arrive (tab_arrivals), not snap.
+                        .children(tab_arrivals(label, switches, t, 12.))
                 })
                 .when(!active, |d| d.child(hover_layer(&id, t.raised, PILL, 0.)))
                 .child(div().relative().child(blocks::icon(
@@ -138,16 +176,7 @@ impl Launcher {
             .cursor_pointer()
             .hover(move |s| s.bg(t.raised))
             .when(settings_open, |d| {
-                d.child(
-                    div()
-                        .absolute()
-                        .left(px(10.))
-                        .right(px(10.))
-                        .bottom_0()
-                        .h(px(3.))
-                        .rounded_full()
-                        .bg(t.accent),
-                )
+                d.children(tab_arrivals("Settings", switches, t, 10.))
             })
             .child(blocks::icon(
                 "sliders",
@@ -159,13 +188,94 @@ impl Launcher {
                 cx.notify();
             }));
         // The plate: translucent, so the page scrolls under it; a soft shadow lifts it off the
-        // content. The shadow colour follows the theme's outline, so it stays a shade of the
-        // palette in both appearances.
-        let lift = |dy: f32, blur: f32, spread: f32, a: f32| gpui::BoxShadow {
-            color: t.outline.opacity(a),
-            offset: gpui::point(px(0.), px(dy)),
-            blur_radius: px(blur),
-            spread_radius: px(spread),
+        // content. Reached for, it lifts a little more, the shadow easing there and back like a
+        // button's does (track_hover_in, against the plate's own state). The shadow colour
+        // follows the theme's outline, so it stays a shade of the palette in both appearances.
+        let id = SharedString::from("dock-plate");
+        let (on, off) = {
+            let state = PLATE_HOVER.lock().unwrap();
+            (
+                state
+                    .on
+                    .as_ref()
+                    .filter(|(h, _)| *h == id)
+                    .map(|(_, at)| *at),
+                state
+                    .off
+                    .as_ref()
+                    .filter(|(h, at)| *h == id && at.elapsed() < theme::MOVE)
+                    .map(|(_, at)| *at),
+            )
+        };
+        static START: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
+        let start = *START.get_or_init(Instant::now);
+        let key_id = id.clone();
+        let key = move |dir: &str, at: Instant| {
+            ElementId::named_usize(format!("{key_id}-{dir}"), (at - start).as_micros() as usize)
+        };
+        let ease = || Animation::new(theme::MOVE).with_easing(ease_out_quint());
+        let plate = track_hover_in(
+            &PLATE_HOVER,
+            div()
+                .id(id.clone())
+                .flex()
+                .items_center()
+                .w_full()
+                .h(px(HEIGHT))
+                .pl(px(12.))
+                .pr(px(8.))
+                .gap(px(8.))
+                .bg(t.panel.opacity(0.88))
+                .border_2()
+                .border_color(t.outline)
+                .rounded(px(PLATE))
+                // A hairline of the block bevel along the top: the glass seam.
+                .child(
+                    div()
+                        .absolute()
+                        .top_0()
+                        .left(px(16.))
+                        .right(px(16.))
+                        .h(px(1.))
+                        .bg(t.bevel),
+                )
+                // Custom title bars carry the mark and name above the sidebar.
+                .when(!titlebar::draws_brand(window), |bar| {
+                    bar.child(mark(18., &t))
+                        .child(
+                            blocks::pixel(15., FontWeight::SEMIBOLD)
+                                .text_color(t.ink)
+                                .child("VESPERA"),
+                        )
+                        .child(div().w(px(1.)).h(px(26.)).mx(px(6.)).bg(t.rule))
+                })
+                .child(nav)
+                .child(
+                    div()
+                        .ml_auto()
+                        .flex()
+                        .flex_none()
+                        .items_center()
+                        .gap(px(8.))
+                        .child(account)
+                        .child(settings),
+                ),
+            id,
+        );
+        let plate = match on {
+            Some(at) => plate
+                .with_animation(key("in", at), ease(), move |d, p| {
+                    d.shadow(plate_shadows(t, p))
+                })
+                .into_any_element(),
+            None => match off {
+                Some(at) => plate
+                    .with_animation(key("out", at), ease(), move |d, p| {
+                        d.shadow(plate_shadows(t, 1. - p))
+                    })
+                    .into_any_element(),
+                None => plate.shadow(plate_shadows(t, 0.)).into_any_element(),
+            },
         };
         div()
             .absolute()
@@ -173,52 +283,6 @@ impl Launcher {
             .right(px(16.))
             .bottom(px(16.))
             .flex()
-            .child(
-                div()
-                    .flex()
-                    .items_center()
-                    .w_full()
-                    .h(px(HEIGHT))
-                    .pl(px(12.))
-                    .pr(px(8.))
-                    .gap(px(8.))
-                    .bg(t.panel.opacity(0.88))
-                    .border_2()
-                    .border_color(t.outline)
-                    .rounded(px(PLATE))
-                    // Softer and wider than a button's: the plate floats, it doesn't sit.
-                    .shadow(vec![lift(14., 36., -8., 0.30), lift(3., 10., -3., 0.20)])
-                    // A hairline of the block bevel along the top: the glass seam.
-                    .child(
-                        div()
-                            .absolute()
-                            .top_0()
-                            .left(px(16.))
-                            .right(px(16.))
-                            .h(px(1.))
-                            .bg(t.bevel),
-                    )
-                    // Custom title bars carry the mark and name above the sidebar.
-                    .when(!titlebar::draws_brand(window), |bar| {
-                        bar.child(mark(18., &t))
-                            .child(
-                                blocks::pixel(15., FontWeight::SEMIBOLD)
-                                    .text_color(t.ink)
-                                    .child("VESPERA"),
-                            )
-                            .child(div().w(px(1.)).h(px(26.)).mx(px(6.)).bg(t.rule))
-                    })
-                    .child(nav)
-                    .child(
-                        div()
-                            .ml_auto()
-                            .flex()
-                            .flex_none()
-                            .items_center()
-                            .gap(px(8.))
-                            .child(account)
-                            .child(settings),
-                    ),
-            )
+            .child(plate)
     }
 }

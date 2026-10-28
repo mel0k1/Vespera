@@ -3999,7 +3999,7 @@ mod tests {
             .map(|e| e.file_name().to_string_lossy().into_owned())
             .collect();
         names.sort();
-        assert_eq!(names, ["vespera-launcher", "new"]);
+        assert_eq!(names, ["new", "vespera-launcher"]);
         let _ = fs::remove_dir_all(&dir);
     }
 

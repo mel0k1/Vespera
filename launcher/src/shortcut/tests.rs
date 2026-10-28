@@ -11,13 +11,13 @@ fn scratch(name: &str) -> PathBuf {
 fn names_fit_every_system() {
     assert_eq!(
         file_name("Hardcore", System::Linux),
-        "Hardcore (Horizon).desktop"
+        "Hardcore (Vespera).desktop"
     );
     assert_eq!(
         file_name("A/B: C?", System::Windows),
-        "A-B- C- (Horizon).lnk"
+        "A-B- C- (Vespera).lnk"
     );
-    assert_eq!(file_name(" .. ", System::Mac), "Instance (Horizon).app");
+    assert_eq!(file_name(" .. ", System::Mac), "Instance (Vespera).app");
     assert_eq!(slug("port:all the mods"), "port-all-the-mods");
 }
 
@@ -32,7 +32,7 @@ fn a_linux_entry_plays_its_instance() {
     assert!(entry
         .contains("\nExec=\"/opt/My Horizon/vespera-launcher\" play --instance \"port:atm\"\n"));
     assert!(entry.contains("\nTryExec=/opt/My Horizon/vespera-launcher\n"));
-    assert!(entry.ends_with("\nX-Horizon-Instance=port:atm\n"));
+    assert!(entry.ends_with("\nX-Vespera-Instance=port:atm\n"));
     let odd = desktop_entry(Path::new("/x"), "a", "Two\nlines");
     assert!(odd.contains("Name=Two lines\n"));
 }
@@ -47,7 +47,7 @@ fn a_mac_app_runs_a_script_that_plays_its_instance() {
     let (_, plist, _) = &files[0];
     let plist = String::from_utf8(plist.clone()).unwrap();
     assert!(plist.contains("<string>Tom &amp; Jerry</string>"));
-    assert!(plist.contains("<string>dev.horizon.instance.it-s</string>"));
+    assert!(plist.contains("<string>dev.vespera.instance.it-s</string>"));
     assert!(plist.contains("<key>LSUIElement</key>\n\t<true/>"));
     let (path, script, program) = &files[1];
     assert_eq!((*path, *program), ("Contents/MacOS/play", true));
@@ -190,7 +190,7 @@ fn shortcuts_are_made_found_renamed_and_removed() {
         assert_eq!(mode & 0o111, 0o111);
     }
     // Someone else's file of that name stays.
-    fs::write(desktop.join("Mine (Horizon).desktop"), "not ours").unwrap();
+    fs::write(desktop.join("Mine (Vespera).desktop"), "not ours").unwrap();
     let err = make_in(System::Linux, &desktop, None, exe, "mine", "Mine", t).unwrap_err();
     assert!(err.contains("isn't this instance's shortcut"), "{err}");
     fs::remove_dir_all(&root).unwrap();

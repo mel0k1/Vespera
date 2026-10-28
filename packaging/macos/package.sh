@@ -23,7 +23,7 @@ rm -rf "$app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$binary" "$app/Contents/MacOS/vespera-launcher"
 chmod 755 "$app/Contents/MacOS/vespera-launcher"
-cp "$here/../icons/horizon.icns" "$app/Contents/Resources/horizon.icns"
+cp "$here/../icons/vespera.icns" "$app/Contents/Resources/vespera.icns"
 sed "s/@VERSION@/$version/g" "$here/Info.plist" > "$app/Contents/Info.plist"
 printf 'APPL????' > "$app/Contents/PkgInfo"
 plutil -lint "$app/Contents/Info.plist"
@@ -49,7 +49,7 @@ rm -f "$out/vespera-launcher-macos-arm64.zip" "$out/vespera-launcher-macos-arm64
 
 cat > "$out/dmg.json" <<JSON
 {
-  "title": "Horizon",
+  "title": "Vespera",
   "icon-size": 128,
   "background": "$here/background.png",
   "window": { "position": { "x": 200, "y": 160 }, "size": { "width": 660, "height": 420 } },
@@ -60,7 +60,7 @@ cat > "$out/dmg.json" <<JSON
   ]
 }
 JSON
-"${DMGBUILD:-dmgbuild}" -s "$out/dmg.json" Horizon "$out/vespera-launcher-macos-arm64.dmg"
+"${DMGBUILD:-dmgbuild}" -s "$out/dmg.json" Vespera "$out/vespera-launcher-macos-arm64.dmg"
 rm "$out/dmg.json"
 dmg=$out/vespera-launcher-macos-arm64.dmg
 if [[ "$identity" != "-" ]]; then

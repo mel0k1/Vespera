@@ -1,9 +1,10 @@
 ; Vespera's Windows installer: NSIS, per-user (no admin). Built by launcher.yml's Package step
-; (makensis -DXVERSION=x.y.z packaging/windows/installer.nsi from the repository root; the
-; binary it wraps is launcher/dist/vespera-launcher.exe, put there by that step, already
-; crt-static so it needs nothing else). The zip stays for self-update; this is the
-; double-clickable install: shortcuts, an uninstaller, Add/Remove Programs. Everything lands
-; in %LOCALAPPDATA%\Vespera.
+; (makensis -DXVERSION=x.y.z packaging/windows/installer.nsi from the repository root; the binary
+; it wraps is launcher/dist/vespera-launcher.exe, put there by that step, already crt-static so it
+; needs nothing else). Paths inside the script are relative to the script's own folder, which is
+; where makensis compiles them from. The zip stays for self-update; this is the double-clickable
+; install: shortcuts, an uninstaller, Add/Remove Programs. Everything lands in
+; %LOCALAPPDATA%\Vespera.
 
 Unicode true
 !include "MUI2.nsh"
@@ -17,14 +18,14 @@ Unicode true
 !endif
 
 Name "${APP} ${XVERSION}"
-OutFile "launcher\out\vespera-launcher-windows-x64-setup.exe"
+OutFile "..\..\launcher\out\vespera-launcher-windows-x64-setup.exe"
 InstallDir "$LOCALAPPDATA\${APP}"
 InstallDirRegKey HKCU "Software\${APP}" ""
 RequestExecutionLevel user
 SetCompressor /SOLID lzma
 
-!define MUI_ICON "packaging\icons\vespera.ico"
-!define MUI_UNICON "packaging\icons\vespera.ico"
+!define MUI_ICON "..\icons\vespera.ico"
+!define MUI_UNICON "..\icons\vespera.ico"
 !define MUI_ABORTWARNING
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
@@ -37,7 +38,7 @@ SetCompressor /SOLID lzma
 Section "Install"
   SetShellVarContext current
   SetOutPath "$INSTDIR"
-  File "launcher\dist\${EXE}"
+  File "..\..\launcher\dist\${EXE}"
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
   CreateShortcut "$SMPROGRAMS\${APP}.lnk" "$INSTDIR\${EXE}"

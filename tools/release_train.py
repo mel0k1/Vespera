@@ -224,9 +224,44 @@ def changed_paths(commit):
     return run("git", "diff", "--name-only", f"{commit}^1", commit).split()
 
 
-def pull_request(number):
-    data = gh_json("pr", "view", str(number), "--repo", REPO, "--json",
-                   "number,title,url,labels,closingIssuesReferences,author,mergedAt")
+KNOWN_PRS = None
+PR_LIST_TRIED = False
+
+
+def pull_request_stub(number, commit=None):
+    """A merge the repository has no pull request for (a fork's carried-over upstream history),
+    titled from its merge commit's subject where that carries one."""
+    title = f"upstream #{number}"
+    if commit:
+        subject = run("git", "log", "-1", "--format=%s", commit).strip()
+        subject = re.sub(r"^Merge pull request #\d+ from \S+\s*", "", subject)
+        title = re.sub(r"\s*\(#\d+\)$", "", subject).strip() or title
+    return {"number": number, "title": title, "url": "", "labels": [], "issues": [], "author": "",
+            "merged_at": None}
+
+
+def pull_request(number, commit=None):
+    global KNOWN_PRS, PR_LIST_TRIED
+    if KNOWN_PRS is not None and number not in KNOWN_PRS:
+        return pull_request_stub(number, commit)
+    try:
+        data = gh_json("pr", "view", str(number), "--repo", REPO, "--json",
+                       "number,title,url,labels,closingIssuesReferences,author,mergedAt")
+    except SystemExit:
+        # Vespera: a fork carries upstream's history, whose pull request numbers do not exist in
+        # this repository, so the lookup fails. The first failure lists this repository's pull
+        # requests once; every number it does not have stubs, instead of a failing roundtrip per
+        # merge commit. Upstream never gets here: its numbers all resolve.
+        if not PR_LIST_TRIED:
+            PR_LIST_TRIED = True
+            try:
+                pages = gh_json("api", f"repos/{REPO}/pulls?state=all&per_page=100", "--paginate", "--slurp")
+                KNOWN_PRS = {pr["number"] for page in pages for pr in page}
+            except SystemExit:
+                KNOWN_PRS = set()
+        if KNOWN_PRS is not None and number not in KNOWN_PRS:
+            return pull_request_stub(number, commit)
+        raise
     return {
         "number": data["number"],
         "title": data["title"].strip(),
@@ -420,7 +455,7 @@ def gather(kind, head, releases=None):
     exporter_paths = exporters()
     prs = []
     for number, commit in merged_pull_requests(base, head):
-        pr = pull_request(number)
+        pr = pull_request(number, commit)
         pr["paths"] = [path for path in changed_paths(commit) if player_facing(path, kind, exporter_paths)]
         prs.append(pr)
     return last, prs

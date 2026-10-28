@@ -35,16 +35,26 @@ impl Launcher {
                 .rounded(px(PILL))
                 .cursor_pointer()
                 .when(active, |d| {
-                    d.bg(t.raised).child(
-                        div()
-                            .absolute()
-                            .left(px(10.))
-                            .right(px(10.))
-                            .top_0()
-                            .h(px(4.))
-                            .rounded(px(2.))
-                            .bg(t.accent),
-                    )
+                    d.bg(t.raised)
+                        // A quiet accent wash (the badge's tint) lifts the tab without a border.
+                        .child(
+                            div()
+                                .absolute()
+                                .inset_0()
+                                .rounded(px(PILL))
+                                .bg(t.accent.opacity(if t.dark { 0.14 } else { 0.12 })),
+                        )
+                        // The indicator sits on the pill's lower edge, at the dock's own edge.
+                        .child(
+                            div()
+                                .absolute()
+                                .left(px(12.))
+                                .right(px(12.))
+                                .bottom_0()
+                                .h(px(3.))
+                                .rounded_full()
+                                .bg(t.accent),
+                        )
                 })
                 .when(!active, |d| d.child(hover_layer(&id, t.raised, PILL, 0.)))
                 .child(div().relative().child(blocks::icon(
@@ -79,7 +89,7 @@ impl Launcher {
             .pr(px(12.))
             .rounded(px(PILL))
             .bg(t.panel)
-            .border_2()
+            .border_1()
             .border_color(t.outline)
             .cursor_pointer()
             .hover(move |s| s.bg(t.raised))
@@ -123,7 +133,7 @@ impl Launcher {
             .size(px(40.))
             .rounded(px(PILL))
             .bg(if settings_open { t.raised } else { t.panel })
-            .border_2()
+            .border_1()
             .border_color(t.outline)
             .cursor_pointer()
             .hover(move |s| s.bg(t.raised))
@@ -133,9 +143,9 @@ impl Launcher {
                         .absolute()
                         .left(px(10.))
                         .right(px(10.))
-                        .top_0()
-                        .h(px(4.))
-                        .rounded(px(2.))
+                        .bottom_0()
+                        .h(px(3.))
+                        .rounded_full()
                         .bg(t.accent),
                 )
             })
@@ -161,7 +171,7 @@ impl Launcher {
             .absolute()
             .left(px(16.))
             .right(px(16.))
-            .bottom(px(14.))
+            .bottom(px(16.))
             .flex()
             .child(
                 div()
@@ -172,11 +182,22 @@ impl Launcher {
                     .pl(px(12.))
                     .pr(px(8.))
                     .gap(px(8.))
-                    .bg(t.panel.opacity(0.85))
+                    .bg(t.panel.opacity(0.88))
                     .border_2()
                     .border_color(t.outline)
                     .rounded(px(PLATE))
-                    .shadow(vec![lift(10., 28., -6., 0.42), lift(2., 8., -2., 0.30)])
+                    // Softer and wider than a button's: the plate floats, it doesn't sit.
+                    .shadow(vec![lift(14., 36., -8., 0.30), lift(3., 10., -3., 0.20)])
+                    // A hairline of the block bevel along the top: the glass seam.
+                    .child(
+                        div()
+                            .absolute()
+                            .top_0()
+                            .left(px(16.))
+                            .right(px(16.))
+                            .h(px(1.))
+                            .bg(t.bevel),
+                    )
                     // Custom title bars carry the mark and name above the sidebar.
                     .when(!titlebar::draws_brand(window), |bar| {
                         bar.child(mark(18., &t))

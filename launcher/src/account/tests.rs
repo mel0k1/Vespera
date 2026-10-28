@@ -343,7 +343,14 @@ fn a_no_from_the_services_plays_offline_unless_the_gate_is_strict() {
     assert_eq!(pass.offline.as_deref(), Some(DOES_NOT_OWN));
     // The answer is kept beside the tokens: offline now, it still says no.
     assert!(!kept(&store).owns && !accounts.has_owner(&store));
-    let pass = launch_with(&offline(), Some("test-client"), &store, &mut accounts, false).unwrap();
+    let pass = launch_with(
+        &offline(),
+        Some("test-client"),
+        &store,
+        &mut accounts,
+        false,
+    )
+    .unwrap();
     assert!(pass.session.is_none() && pass.owner.is_none());
     // The strict gate refuses, with the message the player sees.
     assert_eq!(
@@ -360,7 +367,14 @@ fn a_no_from_the_services_plays_offline_unless_the_gate_is_strict() {
 fn no_network_never_blocks_a_past_owner() {
     let store = MemoryStore::default();
     let mut accounts = signed_in(&store, &secrets("mc-token", true));
-    let pass = launch_with(&offline(), Some("test-client"), &store, &mut accounts, false).unwrap();
+    let pass = launch_with(
+        &offline(),
+        Some("test-client"),
+        &store,
+        &mut accounts,
+        false,
+    )
+    .unwrap();
     // Plays, offline, and says why.
     assert!(pass.session.is_none() && pass.owner.is_none());
     assert!(pass.offline.unwrap().contains("Could not reach"));
@@ -370,13 +384,27 @@ fn no_network_never_blocks_a_past_owner() {
         ..secrets("mc-token", true)
     };
     let mut accounts = signed_in(&store, &stale);
-    assert!(launch_with(&offline(), Some("test-client"), &store, &mut accounts, false).is_ok());
+    assert!(launch_with(
+        &offline(),
+        Some("test-client"),
+        &store,
+        &mut accounts,
+        false
+    )
+    .is_ok());
     assert!(launch_with(&offline(), None, &store, &mut accounts, false).is_ok());
     // An account that never passed doesn't pass the strict gate offline; the relaxed one plays
     // the game all the same.
     let mut accounts = signed_in(&store, &secrets("mc-token", false));
     assert!(launch_with(&offline(), Some("test-client"), &store, &mut accounts, true).is_err());
-    assert!(launch_with(&offline(), Some("test-client"), &store, &mut accounts, false).is_ok());
+    assert!(launch_with(
+        &offline(),
+        Some("test-client"),
+        &store,
+        &mut accounts,
+        false
+    )
+    .is_ok());
 }
 
 #[test]

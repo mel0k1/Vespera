@@ -1235,7 +1235,7 @@ fn download_for_owner(
         } else {
             "\n  • No signed-in account owns Minecraft: Java Edition, so Vespera can't download it."
                 .into()
-        })
+        });
     };
     match pass.owner {
         Some((owner, _)) => {
@@ -1247,10 +1247,10 @@ fn download_for_owner(
         // The strict gate, and an owner by its last answer who can't be asked now.
         None if account::strict_owner_gate() => {
             return Err(format!(
-                "\n  • Downloading {v} from Mojang needs your Microsoft account, which could not be \
+            "\n  • Downloading {v} from Mojang needs your Microsoft account, which could not be \
                  checked: {}",
-                pass.offline.unwrap_or_default()
-            ))
+            pass.offline.unwrap_or_default()
+        ))
         }
         None => log(format!("Downloading {v} from Mojang")),
     }
@@ -1259,9 +1259,8 @@ fn download_for_owner(
         sources::Os::MacOs => "osx",
         sources::Os::Windows => "windows",
     };
-    mojang::download(pins, dir, os, 8, fetch, &mojang::CANCEL, log).map_err(|e| {
-        format!("\n  • Vespera tried to download {v} from Mojang, but: {e}")
-    })
+    mojang::download(pins, dir, os, 8, fetch, &mojang::CANCEL, log)
+        .map_err(|e| format!("\n  • Vespera tried to download {v} from Mojang, but: {e}"))
 }
 
 /// The Java home for this version: a runtime for precompiled exporters, a JDK for older
@@ -3982,11 +3981,7 @@ mod tests {
         fs::write(&exe, "old").unwrap();
         // Another update swaps the file under the running launcher (0644 whatever the umask).
         fs::write(dir.join("other"), "other update").unwrap();
-        fs::set_permissions(
-            dir.join("other"),
-            fs::Permissions::from_mode(0o644),
-        )
-        .unwrap();
+        fs::set_permissions(dir.join("other"), fs::Permissions::from_mode(0o644)).unwrap();
         fs::rename(dir.join("other"), &exe).unwrap();
         fs::write(dir.join("new"), "new").unwrap();
         replace_binary(&dir.join("new"), &exe).unwrap();

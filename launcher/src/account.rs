@@ -44,7 +44,10 @@ pub fn strict_owner_gate() -> bool {
         std::env::var("HORIZON_OWNER_GATE")
             .ok()
             .map(|v| {
-                matches!(v.trim().to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on")
+                matches!(
+                    v.trim().to_ascii_lowercase().as_str(),
+                    "1" | "true" | "yes" | "on"
+                )
             })
             .unwrap_or(false)
     })
@@ -898,7 +901,12 @@ impl Accounts {
     }
 
     /// [`Self::play_as`] with the gate's strictness spelled out (tests).
-    pub fn play_as_with(&mut self, store: &dyn SecretStore, who: Player, strict: bool) -> Result<(), String> {
+    pub fn play_as_with(
+        &mut self,
+        store: &dyn SecretStore,
+        who: Player,
+        strict: bool,
+    ) -> Result<(), String> {
         match who {
             Player::Microsoft(uuid) => {
                 if !self.accounts.iter().any(|a| a.uuid == uuid) {

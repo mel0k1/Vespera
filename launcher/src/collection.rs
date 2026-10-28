@@ -1,8 +1,8 @@
 //! Data collection in the window: the question asked once (and again when what is collected
 //! changes), and its section in Settings. Everything goes through `vespera_launcher::telemetry`.
 use super::*;
-use vespera_launcher::telemetry;
 use horizon_telemetry::{Choices, Consent, Kind as DataKind};
+use vespera_launcher::telemetry;
 
 /// What the window keeps about data collection.
 pub(crate) struct Collection {

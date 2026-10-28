@@ -185,13 +185,7 @@ impl Launcher {
                                     .text_color(t.ink)
                                     .child("VESPERA"),
                             )
-                            .child(
-                                div()
-                                    .w(px(1.))
-                                    .h(px(26.))
-                                    .mx(px(6.))
-                                    .bg(t.rule),
-                            )
+                            .child(div().w(px(1.)).h(px(26.)).mx(px(6.)).bg(t.rule))
                     })
                     .child(nav)
                     .child(

@@ -1,9 +1,9 @@
-use vespera_launcher::process;
 use std::{
     fs,
     path::{Path, PathBuf},
     sync::OnceLock,
 };
+use vespera_launcher::process;
 
 pub fn console_probe() -> &'static Path {
     static PROBE: OnceLock<PathBuf> = OnceLock::new();

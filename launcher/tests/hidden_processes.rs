@@ -2,12 +2,12 @@
 #![cfg(windows)]
 
 mod support;
+use std::{fs, path::Path, sync::mpsc, time::Duration};
+use support::console_probe as probe;
 use vespera_launcher::{
     backend::{self, Job, Msg},
     process,
 };
-use std::{fs, path::Path, sync::mpsc, time::Duration};
-use support::console_probe as probe;
 
 fn logged_child(fail: bool) -> (Vec<String>, Result<(), String>) {
     let (sender, receiver) = mpsc::channel();

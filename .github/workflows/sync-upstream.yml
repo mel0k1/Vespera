@@ -11,6 +11,7 @@ on:
 permissions:
   contents: write
   issues: write
+  actions: write
 
 jobs:
   sync:
@@ -40,6 +41,14 @@ jobs:
               echo "EOF"
             } >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Run the checks on the merged main
+        # Upstream's push filters in ci.yml match a branch named "ain]", so a push alone starts
+        # nothing (theirs run on pull requests and by cron). Dispatch the checks by hand here.
+        if: steps.merge.outputs.conflicts == ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run checks --repo "$GITHUB_REPOSITORY" --ref main
 
       - name: Open an issue when the merge needs hands
         if: steps.merge.outputs.conflicts != ''

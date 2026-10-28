@@ -2,8 +2,8 @@
 //! worlds the player switches on, written to the launcher's `exports/` folder
 //! (`vespera_launcher::export`).
 use super::*;
-use vespera_launcher::export::{self, Format};
 use std::path::PathBuf;
+use vespera_launcher::export::{self, Format};
 
 pub(super) struct ExportPanel {
     /// The instance it is for: picking another closes it.

@@ -3,10 +3,10 @@
 //! icon.
 use super::*;
 use gpui::RenderImage;
-use vespera_launcher::instances::{self, Icon, Instance, Kind as InstanceKind};
 use servers_page::Field;
 use std::collections::HashMap;
 use std::sync::Arc;
+use vespera_launcher::instances::{self, Icon, Instance, Kind as InstanceKind};
 
 /// Textures offered as icons, when the player's prepared files hold them: block faces and items
 /// that read well at sidebar size.

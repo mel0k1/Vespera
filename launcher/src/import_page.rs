@@ -3,8 +3,8 @@
 //! the selected instance. The Packs section and the world rows take their own drops first.
 use super::*;
 use gpui::ExternalPaths;
-use vespera_launcher::import::{self, Dropped};
 use std::path::PathBuf;
+use vespera_launcher::import::{self, Dropped};
 
 #[derive(Default)]
 pub(super) struct Importing {

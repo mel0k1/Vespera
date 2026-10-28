@@ -12,14 +12,14 @@
 use super::mods_page::{Checking, Event};
 use super::*;
 use gpui::img;
+use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
+use std::sync::Arc;
 use vespera_launcher::browser::{
     self,
     details::{Details, Environment, Filters, Sort, Tags},
     images, java, Kind as PackKind, Project, SourceId, Support, Version,
 };
-use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
-use std::sync::Arc;
 
 /// A project page's tabs.
 #[derive(Clone, Copy, PartialEq, Eq)]

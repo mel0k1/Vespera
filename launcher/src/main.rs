@@ -50,13 +50,6 @@ use gpui::{
     FontWeight, Hsla, KeyBinding, KeyDownEvent, Menu, MenuItem, PathPromptOptions, SharedString,
     Stateful, Subscription, Window, WindowBounds, WindowOptions,
 };
-use vespera_launcher::account::{self, Accounts, SignIn, SignInState};
-use vespera_launcher::backend::{self, Job, Msg, Release, Running, Settings, Updates};
-use vespera_launcher::i18n::{self, tr, trf};
-use vespera_launcher::instances;
-use vespera_launcher::native_mods;
-use vespera_launcher::nightly;
-use vespera_launcher::telemetry;
 use scrollbar::Scrollbar;
 use std::borrow::Cow;
 use std::collections::VecDeque;
@@ -65,6 +58,13 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 use theme::Theme;
+use vespera_launcher::account::{self, Accounts, SignIn, SignInState};
+use vespera_launcher::backend::{self, Job, Msg, Release, Running, Settings, Updates};
+use vespera_launcher::i18n::{self, tr, trf};
+use vespera_launcher::instances;
+use vespera_launcher::native_mods;
+use vespera_launcher::nightly;
+use vespera_launcher::telemetry;
 
 #[derive(Clone, Copy, PartialEq)]
 enum Page {

@@ -3,8 +3,8 @@
 //! Show in folder and Delete (to the trash, after a confirmation).
 use super::*;
 use gpui::{ClipboardItem, Image, ImageFormat};
-use vespera_launcher::screenshots::{self, Shot};
 use std::path::PathBuf;
+use vespera_launcher::screenshots::{self, Shot};
 
 /// Thumbnails shown before "Show all".
 const FIRST: usize = 8;

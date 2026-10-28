@@ -3,9 +3,9 @@
 //! after a confirmation).
 use super::*;
 use gpui::ExternalPaths;
+use std::path::PathBuf;
 use vespera_launcher::datapacks::{self, DataPack};
 use vespera_launcher::worlds::World;
-use std::path::PathBuf;
 
 #[derive(Default)]
 pub(super) struct WorldPacks {

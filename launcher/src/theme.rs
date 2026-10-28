@@ -3,10 +3,10 @@
 //! lavender-light with Vespera's twilight violet, Pixelify Sans for headings and controls, Geist and Geist
 //! Mono for text (all bundled, SIL Open Font License).
 use gpui::{rgb, Hsla, WindowAppearance};
-use vespera_launcher::backend::Appearance;
-use vespera_launcher::themes::Accent;
 use horizon_theme as tokens;
 use std::time::Duration;
+use vespera_launcher::backend::Appearance;
+use vespera_launcher::themes::Accent;
 
 pub use tokens::{Step, BODY, CAPTION, DISPLAY, HEADING, LABEL, MICRO, TITLE, UI, WORDMARK};
 pub const FONT: &str = tokens::FONT;

@@ -3,10 +3,10 @@
 //! into it), Remove after a confirmation, and a line to add one.
 use super::*;
 use gpui::{Image, ImageFormat};
-use vespera_launcher::server_list::{self, Server};
 use servers_page::Field;
 use std::path::PathBuf;
 use std::sync::Arc;
+use vespera_launcher::server_list::{self, Server};
 
 #[derive(Default)]
 pub(super) struct Multiplayer {

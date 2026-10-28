@@ -6,13 +6,13 @@
 //! are listed on its Modpacks tab.
 use super::servers_page::{type_key, Key};
 use super::*;
+use horizon_port_pack::check::Check;
+use std::collections::HashMap;
+use std::path::PathBuf;
 use vespera_launcher::browser::{
     self, horizon, installed, java, Kind as PackKind, Project, Query, SourceId, Support,
 };
 use vespera_launcher::modpacks;
-use horizon_port_pack::check::Check;
-use std::collections::HashMap;
-use std::path::PathBuf;
 
 /// The kinds, as the Mods page's tabs: name and icon.
 const KINDS: [(PackKind, &str, &str); 5] = [

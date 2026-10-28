@@ -3,9 +3,9 @@
 //! Add (a file picker) or a .zip or .hshader dropped anywhere on the section.
 use super::*;
 use gpui::{ExternalPaths, Image, ImageFormat};
-use vespera_launcher::packs::{self, Kind as PackKind, Pack};
 use std::path::PathBuf;
 use std::sync::Arc;
+use vespera_launcher::packs::{self, Kind as PackKind, Pack};
 
 #[derive(Default)]
 pub(super) struct Packs {

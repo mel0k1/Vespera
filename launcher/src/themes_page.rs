@@ -1,7 +1,7 @@
 //! Settings' accent colour and Home background rows (`vespera_launcher::themes`).
 use super::*;
-use vespera_launcher::themes::{self, Accent};
 use std::path::PathBuf;
+use vespera_launcher::themes::{self, Accent};
 
 /// Each accent's swatch, in points.
 const SWATCH: f32 = 26.;

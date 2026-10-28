@@ -2,11 +2,11 @@
 //! (docs/agent-control.md): the selected version's `horizon-ctl mcp` runs as a child, its tools
 //! are offered as `game_<name>`, and calls go to it unchanged. `play` starts the game
 //! with the control socket that child talks to.
-use vespera_launcher::backend;
 use serde_json::{json, Value};
 use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
 use std::process::{Child, ChildStdin, ChildStdout, Stdio};
+use vespera_launcher::backend;
 
 pub const PREFIX: &str = "game_";
 

@@ -4,8 +4,8 @@
 //! the launcher reads `tailscale status` and, with the player's own access token, calls the API.
 use super::servers_page::Field;
 use super::*;
-use vespera_launcher::tailscale::{self, Api, Invite, Reach, State};
 use serde_json::Value;
+use vespera_launcher::tailscale::{self, Api, Invite, Reach, State};
 
 /// How often Tailscale's state is read while the panel shows.
 const POLL: Duration = Duration::from_secs(10);

@@ -4,13 +4,13 @@
 //! come from its `horizon-ctl` as `game_*` (game_tools.rs).
 use crate::cli_tools;
 use crate::game_tools::{self, GameTools};
-use vespera_launcher::account::{self, Accounts, SignIn, SignInState};
-use vespera_launcher::backend::{self, Job, Logged};
-use vespera_launcher::instances;
 use serde_json::{json, Value};
 use std::io::{BufRead, Write};
 use std::path::PathBuf;
 use std::time::Duration;
+use vespera_launcher::account::{self, Accounts, SignIn, SignInState};
+use vespera_launcher::backend::{self, Job, Logged};
+use vespera_launcher::instances;
 
 pub const PROTOCOL: &str = "2025-06-18";
 

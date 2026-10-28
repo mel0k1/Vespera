@@ -1,13 +1,13 @@
 //! `vespera-launcher <subcommand>`: the same steps as the window, from a terminal. Every
 //! command goes through `backend`; this file only parses arguments and prints.
 use clap::{Parser, Subcommand};
+use std::io::{IsTerminal, Write};
+use std::path::PathBuf;
+use std::process::Command;
 use vespera_launcher::account::{self, Accounts};
 use vespera_launcher::backend::{self, Release};
 use vespera_launcher::instances;
 use vespera_launcher::server_list;
-use std::io::{IsTerminal, Write};
-use std::path::PathBuf;
-use std::process::Command;
 
 #[derive(Parser)]
 #[command(
@@ -2635,9 +2635,9 @@ fn worlds(action: WorldsCmd, as_json: bool) -> Result<(), String> {
 }
 
 fn modpack(action: ModpackCmd, as_json: bool) -> Result<(), String> {
+    use horizon_port_pack::report::Status;
     use vespera_launcher::browser::horizon;
     use vespera_launcher::modpacks::{self, Imported};
-    use horizon_port_pack::report::Status;
     let log = &|line: String| eprintln!("{line}");
     let work = |pack: &str| {
         let registry = horizon::pack::packs_dir().join(pack);

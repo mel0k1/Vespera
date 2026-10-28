@@ -2,8 +2,8 @@
 //! mode, version, when it was last played and its size, and Back up, Copy, Delete (to the
 //! trash, after a confirmation) and Open folder. Reading sizes and copying run in the background.
 use super::*;
-use vespera_launcher::worlds::{self, World};
 use std::path::{Path, PathBuf};
+use vespera_launcher::worlds::{self, World};
 
 #[derive(Default)]
 pub(super) struct Worlds {

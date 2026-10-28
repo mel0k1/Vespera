@@ -2,9 +2,9 @@
 //! of the skin and the cape, choosing either from a PNG, and the model.
 use super::*;
 use gpui::RenderImage;
-use vespera_launcher::skins::{self, Model};
 use std::path::PathBuf;
 use std::sync::Arc;
+use vespera_launcher::skins::{self, Model};
 
 /// A baked preview, or None without one.
 type Preview = Option<Arc<RenderImage>>;

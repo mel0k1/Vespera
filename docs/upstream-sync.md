@@ -50,9 +50,14 @@ git merge upstream/main
 ```
 
 The `sync upstream` workflow (`.github/workflows/sync-upstream.yml`) merges `upstream/main`
-every Monday and on demand: a clean merge pushes to `main`, a conflicted merge aborts and opens
-an issue listing the files. Note that a push made by the workflow's own token does not start the
-other workflows, so run the checks once by hand after an automatic merge.
+every Monday and on demand: a clean merge pushes to `main`, dispatches the `checks` workflow and
+opens nothing; a conflicted merge aborts and opens an issue listing the files.
+
+A note on CI triggers: upstream's `ci.yml` push filter matches a branch named `ain]` (theirs
+runs on pull requests and through the release crons instead), so a plain push to `main` starts
+no checks in this fork either. The sync workflow dispatches `checks` after every clean merge;
+for your own pushes, run it once from the Actions tab, or fix the filter to `[main]` knowing
+that one-character diff will reappear in future merges.
 
 ## Vespera's future features and where they slot in
 

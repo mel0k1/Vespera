@@ -2,13 +2,13 @@
 //! address, manage who may join, change its settings, back it up and update it, all with buttons. Every
 //! action runs `horizon-server` or calls the running server's control API (`vespera_launcher::servers`).
 use super::*;
+use serde_json::Value;
+use std::collections::{BTreeSet, HashMap};
+use std::path::{Path, PathBuf};
 use vespera_launcher::heads;
 use vespera_launcher::servers::{
     self, Applied, Backup, Entry, Fix, NewServer, Problem, Status, World,
 };
-use serde_json::Value;
-use std::collections::{BTreeSet, HashMap};
-use std::path::{Path, PathBuf};
 
 /// The servers this launcher started in this session, stopped when it closes unless they run as a
 /// service (`stop_on_quit`).

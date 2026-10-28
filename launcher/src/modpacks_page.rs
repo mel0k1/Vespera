@@ -1,10 +1,10 @@
 //! Imported modpacks, on the Mods page's Modpacks tab: import a pack, read its coverage report,
 //! port what this computer can and play it as its own profile (`vespera_launcher::modpacks`).
 use super::*;
-use vespera_launcher::browser::horizon::pack as horizon_pack;
-use vespera_launcher::modpacks::{self, Imported};
 use horizon_port_pack::report::Status;
 use std::path::PathBuf;
+use vespera_launcher::browser::horizon::pack as horizon_pack;
+use vespera_launcher::modpacks::{self, Imported};
 
 /// The report's filter: every row, or one status.
 pub(super) const FILTERS: [(Option<Status>, &str); 5] = [

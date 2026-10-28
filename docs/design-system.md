@@ -50,7 +50,7 @@ Every text colour passes WCAG AA (4.5:1) on every background it is used on; the 
 | `ink`        | `#16181f` | `#ecedf3` | text, selection, slider fill, the inverted segment |
 | `ink_soft`   | `#3b3e49` | `#c5c7d1` | secondary text, values |
 | `muted`      | `#646875` | `#8b8f9c` | labels, descriptions, mono indices and details |
-| `accent`     | `#5b3fd6` | `#9a86ff` | the main action, links, focus, progress |
+| `accent`     | `#7050ff` | `#8a6bff` | the main action, links, focus, progress |
 | `on_accent`  | `#ffffff` | `#0d0e13` | text on the accent |
 | `danger`     | `#b4372a` | `#f07a68` | errors, the crash notice's dot |
 | `success`    | `#1d7a48` | `#45c27a` | "Matches vanilla", "Ready" |

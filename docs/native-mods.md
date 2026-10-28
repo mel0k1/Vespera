@@ -24,7 +24,7 @@ pin builds on the commit of the installed version the build starts from.
 In the window: install a native mod from the Mods page, turn on Settings → Game → **Native mods (experimental)**,
 then **Build**. The launcher names the mods, warns in red, and builds only from "I trust these mods: build"; the
 row shows each step, the error if one fails, and the build the instance plays. From the command line:
-`horizon-launcher native-build [FOLDER] [--instance NAME] --trust-native-code`. FOLDER is a bundle, an unpacked
+`vespera-launcher native-build [FOLDER] [--instance NAME] --trust-native-code`. FOLDER is a bundle, an unpacked
 `.hnmod`, or a folder of them; without it, the native mods turned on in the instance. It is not an MCP tool:
 trusting native code is the player's decision, never an agent's.
 
@@ -33,7 +33,7 @@ trusting native code is the player's decision, never an agent's.
    from static.rust-lang.org into `<launcher data>/rust/`, with its own Cargo home `<launcher data>/cargo/`. No
    rustup, nothing on the system; the player's own Rust is never used. Windows uses the `windows-gnu` host, which
    links without Visual Studio. The linker is the system's on macOS (the Command Line Tools: the launcher asks for
-   `xcode-select --install`) and Linux (`cc`). `horizon-launcher rust status|install|remove`.
+   `xcode-select --install`) and Linux (`cc`). `vespera-launcher rust status|install|remove`.
 2. **horizon-mixins**, at the commit the mods name (their `.hnmod`'s `mixins`), else `native_mods::MIXINS_REV`,
    built once with that cargo (`cargo install --locked --git … --rev …`) into `native/tools/<commit>/`.
 3. **The source** of the pinned commit: GitHub's archive of it, once per commit (`native/source/<commit>/`, about

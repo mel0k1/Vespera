@@ -21,7 +21,7 @@ fn sample() -> Index {
 
 fn scratch(name: &str) -> PathBuf {
     let dir = std::env::temp_dir().join(format!(
-        "horizon-launcher-registry-{name}-{}",
+        "vespera-launcher-registry-{name}-{}",
         std::process::id()
     ));
     let _ = fs::remove_dir_all(&dir);

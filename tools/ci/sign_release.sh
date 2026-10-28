@@ -6,7 +6,7 @@
 # but this file, which calls only the runner's sha256sum and OpenSSL; the publish job then checks the result
 # with horizon-release-sign, as launchers do.
 # EPHEMERAL=yes (dry runs) signs with a throwaway key instead and writes its public key to ephemeral.pub.
-#   tools/ci/sign_release.sh v2026.10.19 dist/horizon-linux-x86_64.tar.gz dist/horizon-windows-x64.zip ...
+#   tools/ci/sign_release.sh v2026.10.19 dist/vespera-linux-x86_64.tar.gz dist/vespera-windows-x64.zip ...
 set -euo pipefail
 tag=$1; shift
 dir=$(dirname "$1")

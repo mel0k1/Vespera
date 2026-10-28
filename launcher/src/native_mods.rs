@@ -567,7 +567,7 @@ fn install(
         if [
             backend::CLIENT,
             ".installed",
-            "Horizon.app",
+            "Vespera.app",
             "native-mods.json",
         ]
         .iter()

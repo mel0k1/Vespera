@@ -1,5 +1,5 @@
 //! The owner gate from the outside: with no account that owns Minecraft: Java Edition in the
-//! launcher, neither `horizon-launcher play` nor the MCP server's play starts the game.
+//! launcher, neither `vespera-launcher play` nor the MCP server's play starts the game.
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
@@ -24,7 +24,7 @@ fn home(name: &str) -> PathBuf {
 }
 
 fn launcher(root: &Path, args: &[&str]) -> Command {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_horizon-launcher"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_vespera-launcher"));
     cmd.args(args)
         .env("HORIZON_HOME", root.join("game"))
         .env("HORIZON_LAUNCHER_HOME", root.join("launcher"))
@@ -50,7 +50,7 @@ fn the_cli_refuses_to_play_without_an_owner() {
     let said = text(&out);
     assert!(!out.status.success(), "{said}");
     assert!(said.contains(REFUSED), "{said}");
-    assert!(said.contains("horizon-launcher account sign-in"), "{said}");
+    assert!(said.contains("vespera-launcher account sign-in"), "{said}");
     // Nothing of the game ran, and the offline name is still there.
     assert!(!root.join("game/sessions").exists());
     let accounts = std::fs::read_to_string(root.join("launcher/accounts.json")).unwrap();

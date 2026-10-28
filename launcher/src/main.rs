@@ -49,13 +49,13 @@ use gpui::{
     FontWeight, Hsla, KeyBinding, KeyDownEvent, Menu, MenuItem, PathPromptOptions, SharedString,
     Stateful, Subscription, Window, WindowBounds, WindowOptions,
 };
-use horizon_launcher::account::{self, Accounts, SignIn, SignInState};
-use horizon_launcher::backend::{self, Job, Msg, Release, Running, Settings, Updates};
-use horizon_launcher::i18n::{self, tr, trf};
-use horizon_launcher::instances;
-use horizon_launcher::native_mods;
-use horizon_launcher::nightly;
-use horizon_launcher::telemetry;
+use vespera_launcher::account::{self, Accounts, SignIn, SignInState};
+use vespera_launcher::backend::{self, Job, Msg, Release, Running, Settings, Updates};
+use vespera_launcher::i18n::{self, tr, trf};
+use vespera_launcher::instances;
+use vespera_launcher::native_mods;
+use vespera_launcher::nightly;
+use vespera_launcher::telemetry;
 use scrollbar::Scrollbar;
 use std::borrow::Cow;
 use std::collections::VecDeque;
@@ -171,7 +171,7 @@ struct Launcher {
     /// nothing can launch, select or prepare it, and its row can't install or remove it again.
     removing: Option<String>,
     install_error: Option<(String, String)>,
-    /// Nightly (`horizon_launcher::nightly`): how far the nightly being installed is, and why the
+    /// Nightly (`vespera_launcher::nightly`): how far the nightly being installed is, and why the
     /// last check or install failed.
     nightly_progress: Option<f32>,
     nightly_error: Option<String>,
@@ -253,13 +253,13 @@ struct Launcher {
     install_started: Option<Instant>,
     prepare_started: Option<Instant>,
     play_pressed: Option<Instant>,
-    /// `horizon-launcher benchmark` started this window to measure it.
+    /// `vespera-launcher benchmark` started this window to measure it.
     bench: Option<perf::Bench>,
     /// The Modpacks page: the imported packs (read when the page first opens), the one shown,
     /// the report's filter, and the pipeline step running now with its log.
-    packs: Vec<horizon_launcher::modpacks::Imported>,
+    packs: Vec<vespera_launcher::modpacks::Imported>,
     /// Modpacks installed from Horizon's registry, each its own profile.
-    registry_packs: Vec<horizon_launcher::browser::horizon::pack::Installed>,
+    registry_packs: Vec<vespera_launcher::browser::horizon::pack::Installed>,
     packs_loaded: Option<Instant>,
     pack_open: Option<String>,
     pack_filter: Option<horizon_port_pack::report::Status>,
@@ -289,7 +289,7 @@ struct Launcher {
     /// The name the game made up for an offline player (`horizon-player.txt`), for the top bar.
     offline_name: Option<String>,
     /// The player's servers, for the sidebar until the Servers page has read them.
-    side_servers: Vec<horizon_launcher::servers::Entry>,
+    side_servers: Vec<vespera_launcher::servers::Entry>,
     /// The pixel art made for this window (`art.rs`), and pictures downloaded by URL.
     art: art::Art,
     /// The window's scale, as of its last frame, for art drawn outside `render`'s reach.
@@ -352,7 +352,7 @@ impl Launcher {
                 || std::env::var_os("HORIZON_LAUNCHER_DESKTOP_ENTRY").is_some())
         {
             std::thread::spawn(|| {
-                let _ = horizon_launcher::desktop::repair(backend::exe_path());
+                let _ = vespera_launcher::desktop::repair(backend::exe_path());
             });
         }
         let installed = backend::installed();
@@ -469,7 +469,7 @@ impl Launcher {
             aside: while_playing::Aside::new(window.window_handle()),
             shortcuts: Default::default(),
             offline_name: offline_name(),
-            side_servers: horizon_launcher::servers::list(),
+            side_servers: vespera_launcher::servers::list(),
             art: art::Art::default(),
             scale: window.scale_factor(),
         };
@@ -617,7 +617,7 @@ impl Launcher {
                     .cloned()
             });
         let Some(base) = base else {
-            self.native_error = Some(tr("Install Horizon first.").into());
+            self.native_error = Some(tr("Install Vespera first.").into());
             return;
         };
         let folder = match self.native_mods_to_build() {
@@ -741,7 +741,7 @@ impl Launcher {
                                     .find(|i| i.work == work)
                                     .map(|i| i.id);
                                 let applied =
-                                    horizon_launcher::modpacks::apply_profile(&mut cmd, &work);
+                                    vespera_launcher::modpacks::apply_profile(&mut cmd, &work);
                                 (applied, id)
                             }
                             None => {
@@ -769,7 +769,7 @@ impl Launcher {
                             .and_then(|id| instances::list().into_iter().find(|i| &i.id == id))
                             .map(|i| i.launch)
                             .unwrap_or_default();
-                        let cmd = horizon_launcher::launch::wrap(cmd, &launch);
+                        let cmd = vespera_launcher::launch::wrap(cmd, &launch);
                         self.client_home = cmd.get_current_dir().map(|d| d.to_path_buf());
                         match backend::spawn(Job::Client, cmd, self.tx.clone()) {
                             Ok(r) => {
@@ -946,7 +946,7 @@ impl Launcher {
                                 .and_then(|since| backend::crash_report_since(&home, since));
                             if error.is_some() && report.is_none() && self.switched_to_dx12() {
                                 self.client_error = Some(
-                                    "Horizon's Vulkan renderer crashed while starting on this \
+                                    "Vespera's Vulkan renderer crashed while starting on this \
                                      graphics card, so the game now uses DirectX 12. Press Play \
                                      to start it again. Video Settings > Graphics API switches \
                                      back."
@@ -1027,7 +1027,7 @@ impl Launcher {
         for home in homes {
             match backend::switch_to_dx12(&home) {
                 Ok(changed) => switched |= changed,
-                Err(e) => eprintln!("Horizon launcher: could not switch to DirectX 12: {e}"),
+                Err(e) => eprintln!("Vespera launcher: could not switch to DirectX 12: {e}"),
             }
         }
         switched
@@ -1095,7 +1095,7 @@ impl Launcher {
         let Some(tag) = self.selected().cloned() else {
             return;
         };
-        horizon_launcher::mojang::CANCEL.store(false, Ordering::Relaxed);
+        vespera_launcher::mojang::CANCEL.store(false, Ordering::Relaxed);
         let minecraft = self
             .settings
             .minecraft_dir
@@ -1418,9 +1418,9 @@ fn button(
 }
 
 /// Copies to the clipboard, or into `HORIZON_LAUNCHER_CLIPBOARD` when a test run sets it
-/// (`horizon_launcher::desktop_seams`).
+/// (`vespera_launcher::desktop_seams`).
 fn copy_to_clipboard(cx: &mut App, item: gpui::ClipboardItem) {
-    let Some(file) = horizon_launcher::desktop_seams::clipboard_file() else {
+    let Some(file) = vespera_launcher::desktop_seams::clipboard_file() else {
         cx.write_to_clipboard(item);
         return;
     };
@@ -1852,7 +1852,7 @@ impl Launcher {
                         .child(
                             blocks::pixel(20., FontWeight::SEMIBOLD)
                                 .text_color(t.ink)
-                                .child("HORIZON"),
+                                .child("VESPERA"),
                         ),
                 )
             })
@@ -2319,7 +2319,7 @@ impl Launcher {
         let resources_value = match first {
             _ if self.preparing => tr("Preparing…").to_string(),
             Some(true) => trf(
-                "Not prepared. Horizon can download Minecraft {version} from Mojang for your account, or use your own install.",
+                "Not prepared. Vespera can download Minecraft {version} from Mojang for your account, or use your own install.",
                 &[("version", &version)],
             ),
             Some(false) => trf(
@@ -2521,10 +2521,10 @@ impl Launcher {
             let last = self.prepare_log.back().cloned().unwrap_or_default();
             // A download from Mojang shows how far it is, and can stop (it goes on from there
             // next time).
-            let download = horizon_launcher::mojang::progress();
+            let download = vespera_launcher::mojang::progress();
             let cancel = download.map(|_| {
                 button("download-cancel", "Cancel", Kind::Ghost, &t).on_click(|_, _, _| {
-                    horizon_launcher::mojang::CANCEL.store(true, Ordering::Relaxed)
+                    vespera_launcher::mojang::CANCEL.store(true, Ordering::Relaxed)
                 })
             });
             page = page.child(
@@ -2663,7 +2663,7 @@ impl Launcher {
             .child(
                 text(theme::HEADING)
                     .text_color(t.ink)
-                    .child(tr("Horizon crashed")),
+                    .child(tr("Vespera crashed")),
             );
         if !crash.summary.is_empty() {
             body = body.child(div().text_color(t.ink_soft).child(crash.summary));
@@ -2710,7 +2710,7 @@ impl Launcher {
                 .and_then(|r| backend::notes_summary(&r.body)),
             _ => None,
         };
-        let title = "Horizon";
+        let title = "Vespera";
         // Never squeezed by the rows below: the ping notice can make it tall.
         let mut hero = div()
             .flex()
@@ -2862,16 +2862,16 @@ impl Launcher {
                 cx.notify();
             },
         ));
-        // Linux: the launcher's entry in the applications menu (`horizon_launcher::desktop`).
+        // Linux: the launcher's entry in the applications menu (`vespera_launcher::desktop`).
         let menu_entry = switch("desktop-entry", self.settings.desktop_entry(), &t).on_click(
             cx.listener(|this, _: &ClickEvent, _, cx| {
                 let on = !this.settings.desktop_entry();
                 this.settings.desktop_entry = Some(on);
                 this.settings.save();
                 let _ = if on {
-                    horizon_launcher::desktop::install(backend::exe_path()).map(|_| ())
+                    vespera_launcher::desktop::install(backend::exe_path()).map(|_| ())
                 } else {
-                    horizon_launcher::desktop::remove()
+                    vespera_launcher::desktop::remove()
                 };
                 cx.notify();
             }),
@@ -3033,7 +3033,7 @@ impl Launcher {
                     .child(group("AI", "terminal"))
                     .child(self.no_ai_row(n + 6, cx))
                     .child(group("About", "info-box"))
-                    .child(index_row(n + 7, "Horizon", Some(plain(&horizon)), horizon_action, &t))
+                    .child(index_row(n + 7, "Vespera", Some(plain(&horizon)), horizon_action, &t))
                     .child(index_row(
                         n + 8,
                         tr("Launcher"),
@@ -3072,7 +3072,7 @@ impl Launcher {
                             n + 11,
                             tr("Applications menu"),
                             Some(plain(if self.settings.desktop_entry() {
-                                "Horizon and its icon are in your desktop's menu."
+                                "Vespera and its icon are in your desktop's menu."
                             } else {
                                 "Not in your desktop's menu."
                             })),
@@ -3114,7 +3114,7 @@ impl Launcher {
                 .and_then(|i| i.version.clone())
             {
                 Some(version) => trf(
-                    "{version} in the Nightly instance. Choose Horizon in the sidebar to play the release.",
+                    "{version} in the Nightly instance. Choose Vespera in the sidebar to play the release.",
                     &[("version", &version)],
                 ),
                 None => tr("No nightly build yet.").to_string(),
@@ -3363,7 +3363,7 @@ impl Launcher {
                 cx.notify();
             }));
         // A half-typed address is no reason to complain; one left behind is.
-        let detail = match (focused, horizon_launcher::proxy::refuse(&self.proxy_input)) {
+        let detail = match (focused, vespera_launcher::proxy::refuse(&self.proxy_input)) {
             (false, Some(why)) => div().text_color(t.danger).child(why).into_any_element(),
             _ => div()
                 .child(
@@ -3382,7 +3382,7 @@ impl Launcher {
         let value = self.proxy_input.trim().to_owned();
         self.settings.proxy = (!value.is_empty()).then_some(value);
         self.settings.save();
-        horizon_launcher::proxy::announce(self.settings.proxy.clone());
+        vespera_launcher::proxy::announce(self.settings.proxy.clone());
     }
 
     /// Settings' Microsoft accounts: who is signed in and plays, the sign-in with its code. The
@@ -3473,7 +3473,7 @@ impl Launcher {
             Some(SignInState::Done(Ok(a))) => div().child(format!("Signed in as {}.", a.name)),
             Some(SignInState::Done(Err(e))) => div().text_color(t.danger).child(e.clone()),
             None if self.accounts.accounts.is_empty() => div().child(tr(
-                "Horizon needs a Microsoft account that owns Minecraft: Java Edition, like other launchers. It also plays online servers with your name and skin.",
+                "Vespera needs a Microsoft account that owns Minecraft: Java Edition, like other launchers. It also plays online servers with your name and skin.",
             )),
             None => div().child(tr("Add another account.")),
         };
@@ -3893,7 +3893,7 @@ impl Launcher {
                                 .child("Support the work below"),
                         )
                         .child(text(theme::UI).text_color(t.muted).child(
-                            "Horizon is built in the open. Sponsors fund the next release.",
+                            "Vespera is built in the open. Sponsors fund the next release.",
                         )),
                 )
                 .child(
@@ -4180,7 +4180,7 @@ impl Render for Launcher {
                 .line_height(px(theme::WORDMARK.px * 0.5))
                 .font_weight(FontWeight::BOLD)
                 .text_color(t.ink)
-                .children("HORIZON".chars().enumerate().map(|(i, c)| {
+                .children("VESPERA".chars().enumerate().map(|(i, c)| {
                     let at = held - i as f32 * theme::STAGGER.as_secs_f32() * 1.5;
                     let p = ease_out_cubic(at / theme::ENTER.as_secs_f32());
                     div()
@@ -4257,7 +4257,7 @@ impl Launcher {
         (reveal, held.as_secs_f32())
     }
 
-    /// `horizon-launcher benchmark`: scroll the page a little on every frame, back to the top at
+    /// `vespera-launcher benchmark`: scroll the page a little on every frame, back to the top at
     /// the bottom, so the frame times measure scrolling.
     fn bench_scroll(&mut self, window: &mut Window) {
         let handle = &self.content_scroll.handle;
@@ -4277,7 +4277,7 @@ impl Launcher {
     }
 }
 
-actions!(horizon_launcher, [Quit, CloseWindow]);
+actions!(vespera_launcher, [Quit, CloseWindow]);
 
 /// What closing the last window does: stop the servers this launcher started, send the telemetry,
 /// exit. A game that is running keeps running. Cmd+Q goes through here too.
@@ -4305,8 +4305,8 @@ fn key_bindings() -> Vec<KeyBinding> {
 fn menus() -> Vec<Menu> {
     vec![
         Menu {
-            name: "Horizon Launcher".into(),
-            items: vec![MenuItem::action("Quit Horizon Launcher", Quit)],
+            name: "Vespera Launcher".into(),
+            items: vec![MenuItem::action("Quit Vespera Launcher", Quit)],
         },
         Menu {
             name: "Window".into(),
@@ -4324,7 +4324,7 @@ fn main() {
     backend::exe_path();
     // What the launcher downloads goes through the player's proxy, if they set one: the parts
     // that build their own agents (`horizon-port-pack`) are told before anything starts.
-    horizon_launcher::proxy::announce(horizon_launcher::backend::Settings::load().proxy);
+    vespera_launcher::proxy::announce(vespera_launcher::backend::Settings::load().proxy);
     if let Some(code) = cli::run() {
         std::process::exit(code);
     }
@@ -4362,7 +4362,7 @@ fn main() {
                     titlebar: Some(titlebar::options()),
                     #[cfg(target_os = "linux")]
                     window_decorations: Some(gpui::WindowDecorations::Client),
-                    app_id: Some("horizon-launcher".into()),
+                    app_id: Some("vespera-launcher".into()),
                     ..Default::default()
                 },
                 |window, cx| cx.new(|cx| Launcher::new(window, cx)),
@@ -4405,10 +4405,10 @@ mod tests {
     #[test]
     fn the_app_menu_has_quit() {
         let menus = super::menus();
-        assert_eq!(menus[0].name, "Horizon Launcher");
+        assert_eq!(menus[0].name, "Vespera Launcher");
         assert!(matches!(
             &menus[0].items[0],
-            gpui::MenuItem::Action { name, .. } if name == "Quit Horizon Launcher"
+            gpui::MenuItem::Action { name, .. } if name == "Quit Vespera Launcher"
         ));
     }
 

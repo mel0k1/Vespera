@@ -1,9 +1,9 @@
-//! The selected instance's server list on Home (`horizon_launcher::server_list`, the game's own
+//! The selected instance's server list on Home (`vespera_launcher::server_list`, the game's own
 //! `servers.dat`): each server with the picture the game last saw, Join (the game starts straight
 //! into it), Remove after a confirmation, and a line to add one.
 use super::*;
 use gpui::{Image, ImageFormat};
-use horizon_launcher::server_list::{self, Server};
+use vespera_launcher::server_list::{self, Server};
 use servers_page::Field;
 use std::path::PathBuf;
 use std::sync::Arc;

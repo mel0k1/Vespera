@@ -83,7 +83,7 @@ def game_env(base=None, **extra):
     # Never a real Discord's Rich Presence; tools/discord_presence_e2e.py points the game at a fake one.
     if not env.get("HORIZON_DISCORD_IPC_DIR"):
         env["HORIZON_NO_DISCORD"] = "1"
-    for key, prefix in (("HORIZON_HOME", "horizon-home-"), ("HORIZON_LAUNCHER_HOME", "horizon-launcher-home-"),
+    for key, prefix in (("HORIZON_HOME", "horizon-home-"), ("HORIZON_LAUNCHER_HOME", "vespera-launcher-home-"),
                         ("XDG_DATA_HOME", "horizon-xdg-data-"), ("XDG_CONFIG_HOME", "horizon-xdg-config-")):
         if not env.get(key):
             env[key] = _scratch_dir(prefix)

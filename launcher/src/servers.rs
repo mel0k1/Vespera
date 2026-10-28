@@ -132,12 +132,12 @@ pub fn game_files_ready() -> bool {
 pub fn can_host(tag: &str) -> Result<(), String> {
     if !backend::version_dir(tag).join(PROGRAM).is_file() {
         return Err(format!(
-            "Horizon {tag} has no server program. Install a newer version on the Versions page."
+            "Vespera {tag} has no server program. Install a newer version on the Versions page."
         ));
     }
     if !backend::is_prepared(tag) {
         return Err(format!(
-            "Horizon {tag} isn't prepared yet: press Prepare on the Play page (it uses your own Minecraft {})",
+            "Vespera {tag} isn't prepared yet: press Prepare on the Play page (it uses your own Minecraft {})",
             backend::game_version(tag)
         ));
     }
@@ -204,7 +204,7 @@ fn copy_release(from: &Path, to: &Path) -> std::io::Result<()> {
     for entry in fs::read_dir(from)? {
         let entry = entry?;
         let name = entry.file_name();
-        if name == ".local" || name == ".installed" || name == "Horizon.app" {
+        if name == ".local" || name == ".installed" || name == "Vespera.app" {
             continue;
         }
         let target = to.join(&name);
@@ -578,9 +578,9 @@ pub fn create(spec: &NewServer, tag: Option<&str>, log: &dyn Fn(String)) -> Resu
     }
     if program().is_none() || !game_files_ready() {
         let tag = tag.ok_or_else(|| {
-            Problem::plain("Install a Horizon version first (Versions page), then prepare it.")
+            Problem::plain("Install a Vespera version first (Versions page), then prepare it.")
         })?;
-        log(format!("Setting up the server programs from Horizon {tag}"));
+        log(format!("Setting up the server programs from Vespera {tag}"));
         set_up(tag).map_err(|e| {
             if e.contains("prepared") {
                 Problem {

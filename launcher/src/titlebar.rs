@@ -2,7 +2,7 @@
 //! server-side decorations use the platform's native chrome.
 use crate::theme::Theme;
 use gpui::{Div, TitlebarOptions, Window};
-use horizon_launcher::backend::Appearance;
+use vespera_launcher::backend::Appearance;
 
 /// Whether Windows uses a transparent native title bar for the launcher's custom chrome.
 pub const DRAWN: bool = cfg!(target_os = "windows");
@@ -22,7 +22,7 @@ pub fn draws_brand(window: &Window) -> bool {
 
 pub fn options() -> TitlebarOptions {
     TitlebarOptions {
-        title: Some("Horizon".into()),
+        title: Some("Vespera".into()),
         appears_transparent: DRAWN,
         ..Default::default()
     }

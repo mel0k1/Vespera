@@ -1,8 +1,8 @@
 //! Imported modpacks, on the Mods page's Modpacks tab: import a pack, read its coverage report,
-//! port what this computer can and play it as its own profile (`horizon_launcher::modpacks`).
+//! port what this computer can and play it as its own profile (`vespera_launcher::modpacks`).
 use super::*;
-use horizon_launcher::browser::horizon::pack as horizon_pack;
-use horizon_launcher::modpacks::{self, Imported};
+use vespera_launcher::browser::horizon::pack as horizon_pack;
+use vespera_launcher::modpacks::{self, Imported};
 use horizon_port_pack::report::Status;
 use std::path::PathBuf;
 

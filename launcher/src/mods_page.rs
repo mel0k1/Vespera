@@ -2,14 +2,14 @@
 //! (CurseForge: coming soon) for Java mods, modpacks and resource packs, see where each comes
 //! from and how well it runs (a Java mod's jar is checked first; a Horizon mod says whether it is
 //! signed and what it may do), install it with its checksum checked, turn Horizon mods on and
-//! off, and update or remove what was installed (`horizon_launcher::browser`). Imported modpacks
+//! off, and update or remove what was installed (`vespera_launcher::browser`). Imported modpacks
 //! are listed on its Modpacks tab.
 use super::servers_page::{type_key, Key};
 use super::*;
-use horizon_launcher::browser::{
+use vespera_launcher::browser::{
     self, horizon, installed, java, Kind as PackKind, Project, Query, SourceId, Support,
 };
-use horizon_launcher::modpacks;
+use vespera_launcher::modpacks;
 use horizon_port_pack::check::Check;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -108,7 +108,7 @@ impl Mods {
     /// Reads the instance's worlds again; the world picked for data packs stays when it is
     /// still there, else the last played.
     fn read_worlds(&mut self) {
-        self.worlds = horizon_launcher::worlds::list(&self.home())
+        self.worlds = vespera_launcher::worlds::list(&self.home())
             .into_iter()
             .map(|w| (w.path, w.name))
             .collect();

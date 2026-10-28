@@ -118,8 +118,8 @@ jobs:
           EPHEMERAL: ${{ needs.decide.outputs.dry_run == 'true' && 'yes' || '' }}
           TAG: ${{ needs.decide.outputs.tag }}
         run: |
-          bash tools/ci/sign_release.sh "$TAG" dist/horizon-linux-x86_64.tar.gz dist/horizon-windows-x64.zip \
-            dist/horizon-macos-arm64.zip dist/horizon-server-linux-x86_64.tar.gz
+          bash tools/ci/sign_release.sh "$TAG" dist/vespera-linux-x86_64.tar.gz dist/vespera-windows-x64.zip \
+            dist/vespera-macos-arm64.zip dist/horizon-server-linux-x86_64.tar.gz
       - uses: actions/upload-artifact@v4
         with:
           name: signature
@@ -185,9 +185,9 @@ jobs:
           # files for the download (#1647). Launchers, servers and install.sh match the name, which stays.
           gh release create "$TAG" --target "${{ needs.decide.outputs.head }}" --title "$(cat notes/title.txt)" \
             --notes-file notes/body.md --latest \
-            "dist/horizon-linux-x86_64.tar.gz#Game files the launcher installs: Linux (horizon-linux-x86_64.tar.gz)" \
-            "dist/horizon-windows-x64.zip#Game files the launcher installs: Windows (horizon-windows-x64.zip)" \
-            "dist/horizon-macos-arm64.zip#Game files the launcher installs: macOS (horizon-macos-arm64.zip)" \
+            "dist/vespera-linux-x86_64.tar.gz#Game files the launcher installs: Linux (vespera-linux-x86_64.tar.gz)" \
+            "dist/vespera-windows-x64.zip#Game files the launcher installs: Windows (vespera-windows-x64.zip)" \
+            "dist/vespera-macos-arm64.zip#Game files the launcher installs: macOS (vespera-macos-arm64.zip)" \
             "dist/horizon-server-linux-x86_64.tar.gz#Dedicated server for Linux (horizon-server-linux-x86_64.tar.gz)" \
             dist/SHA256SUMS "${signature[@]}" dist/smoke-test.json
       - name: Dry run, the release that would be published

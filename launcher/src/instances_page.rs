@@ -1,9 +1,9 @@
-//! Instances in the window (`horizon_launcher::instances`): the sidebar's list, by group, and the
+//! Instances in the window (`vespera_launcher::instances`): the sidebar's list, by group, and the
 //! dialog that makes one (empty, or a copy of the selected one) or changes its name, group and
 //! icon.
 use super::*;
 use gpui::RenderImage;
-use horizon_launcher::instances::{self, Icon, Instance, Kind as InstanceKind};
+use vespera_launcher::instances::{self, Icon, Instance, Kind as InstanceKind};
 use servers_page::Field;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -349,7 +349,7 @@ impl Launcher {
         );
         let from = self
             .selected_instance()
-            .map_or_else(|| "Horizon".into(), |i| i.name.clone());
+            .map_or_else(|| "Vespera".into(), |i| i.name.clone());
         let row = |label: &'static str, control: AnyElement| {
             div()
                 .flex()

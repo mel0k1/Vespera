@@ -333,7 +333,7 @@ pub fn install_datapack(
     })?;
     let file = version.file().expect("pick keeps versions with a file");
     let folder = std::env::temp_dir().join(format!(
-        "horizon-launcher-datapack-{}-{}",
+        "vespera-launcher-datapack-{}-{}",
         std::process::id(),
         version.id
     ));

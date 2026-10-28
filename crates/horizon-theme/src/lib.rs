@@ -3,7 +3,7 @@
 //! generated from [`css`] by `cargo run -p xtask -- tokens`, which the site's build reads from main). Change a value here and all three
 //! follow. The system is described in `docs/design-system.md`.
 //!
-//! Cool neutrals in two appearances and one violet accent; Geist and Geist Mono only, bundled
+//! Cool neutrals in two appearances and one twilight-violet accent; Geist and Geist Mono only, bundled
 //! here under the SIL Open Font License (`fonts/OFL-Geist.txt`). Colours are `0xRRGGBB`; sizes
 //! are in logical pixels.
 use std::fmt::Write as _;
@@ -83,7 +83,7 @@ pub mod icons {
 
 /// Horizon's icon at 64 px (PNG), for window title bars and task bars at run time. Rendered from
 /// `docs/media/brand/icon.svg` by `cargo run -p xtask -- icons`.
-pub const ICON_PNG: &[u8] = include_bytes!("../icons/horizon-64.png");
+pub const ICON_PNG: &[u8] = include_bytes!("../icons/vespera-64.png");
 
 /// How a type step sizes on the web.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -313,7 +313,7 @@ pub const LIGHT: Palette = Palette {
     ink: 0x16181f,
     ink_soft: 0x3b3e49,
     muted: 0x646875,
-    accent: 0x5b3fd6,
+    accent: 0x7050ff,
     on_accent: 0xffffff,
     danger: 0xb4372a,
     success: 0x1d7a48,
@@ -329,7 +329,7 @@ pub const DARK: Palette = Palette {
     ink: 0xecedf3,
     ink_soft: 0xc5c7d1,
     muted: 0x8b8f9c,
-    accent: 0x9a86ff,
+    accent: 0x8a6bff,
     on_accent: 0x0d0e13,
     danger: 0xf07a68,
     success: 0x45c27a,
@@ -396,10 +396,10 @@ pub const BLOCKS_DARK: Blocks = Blocks {
     ink: 0xecedf3,
     ink_soft: 0xc5c7d1,
     muted: 0xa29cb8,
-    accent: 0x9a86ff,
-    face: 0x5b3fd6,
-    face_bevel: 0x8a74ff,
-    face_lip: 0x3a2694,
+    accent: 0x7c5cff,
+    face: 0x6a4df2,
+    face_bevel: 0x9d82ff,
+    face_lip: 0x4d2fb8,
     on_face: 0xffffff,
     danger: 0xf07a68,
     success: 0x45c27a,
@@ -422,10 +422,10 @@ pub const BLOCKS_LIGHT: Blocks = Blocks {
     ink: 0x1b1530,
     ink_soft: 0x3b3354,
     muted: 0x585071,
-    accent: 0x5333c9,
-    face: 0x5b3fd6,
-    face_bevel: 0x8069ef,
-    face_lip: 0x3a2694,
+    accent: 0x6a3fe0,
+    face: 0x7050ff,
+    face_bevel: 0x9d82ff,
+    face_lip: 0x4d2fb8,
     on_face: 0xffffff,
     danger: 0xa3301d,
     success: 0x136336,

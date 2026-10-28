@@ -78,7 +78,7 @@ fn request_to(method: &str, url: &str) -> ureq::Request {
     crate::proxy::agent(
         ureq::AgentBuilder::new()
             .timeout(Duration::from_secs(20))
-            .user_agent(&format!("horizon-launcher/{}", crate::backend::VERSION)),
+            .user_agent(&format!("vespera-launcher/{}", crate::backend::VERSION)),
         url,
     )
     .build()
@@ -604,7 +604,7 @@ impl SecretStore for SystemStore {
             let attributes = vec![("service", SERVICE), ("account", key)];
             keyring
                 .create_item(
-                    "Horizon launcher: Minecraft account",
+                    "Vespera launcher: Minecraft account",
                     &attributes,
                     secret.as_bytes(),
                     true,

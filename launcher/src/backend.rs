@@ -9,10 +9,10 @@ use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Mutex};
 
-pub const REPO: &str = "horizon-rust/horizon";
-pub const README_URL: &str = "https://github.com/horizon-rust/horizon/blob/main/launcher/README.md";
+pub const REPO: &str = "mel0k1/Vespera";
+pub const README_URL: &str = "https://github.com/mel0k1/Vespera/blob/main/launcher/README.md";
 /// The players' page on connecting an AI agent (the website's docs/agents.md).
-pub const AGENT_DOCS_URL: &str = "https://playhorizon.dev/docs/agents";
+pub const AGENT_DOCS_URL: &str = "https://github.com/mel0k1/Vespera/blob/main/docs/agent-control.md";
 /// This launcher's version: the release workflow sets `HORIZON_LAUNCHER_VERSION` from the
 /// tag it builds (no version-bump commits); other builds say Cargo.toml's.
 pub const VERSION: &str = version_or(option_env!("HORIZON_LAUNCHER_VERSION"));
@@ -43,11 +43,11 @@ pub struct Release {
 }
 
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-pub const ASSET: Option<&str> = Some("horizon-linux-x86_64.tar.gz");
+pub const ASSET: Option<&str> = Some("vespera-linux-x86_64.tar.gz");
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-pub const ASSET: Option<&str> = Some("horizon-macos-arm64.zip");
+pub const ASSET: Option<&str> = Some("vespera-macos-arm64.zip");
 #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
-pub const ASSET: Option<&str> = Some("horizon-windows-x64.zip");
+pub const ASSET: Option<&str> = Some("vespera-windows-x64.zip");
 #[cfg(not(any(
     all(target_os = "linux", target_arch = "x86_64"),
     all(target_os = "macos", target_arch = "aarch64"),
@@ -56,11 +56,11 @@ pub const ASSET: Option<&str> = Some("horizon-windows-x64.zip");
 pub const ASSET: Option<&str> = None;
 
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
-pub const LAUNCHER_ASSET: Option<&str> = Some("horizon-launcher-linux-x86_64.tar.gz");
+pub const LAUNCHER_ASSET: Option<&str> = Some("vespera-launcher-linux-x86_64.tar.gz");
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
-pub const LAUNCHER_ASSET: Option<&str> = Some("horizon-launcher-macos-arm64.zip");
+pub const LAUNCHER_ASSET: Option<&str> = Some("vespera-launcher-macos-arm64.zip");
 #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
-pub const LAUNCHER_ASSET: Option<&str> = Some("horizon-launcher-windows-x64.zip");
+pub const LAUNCHER_ASSET: Option<&str> = Some("vespera-launcher-windows-x64.zip");
 #[cfg(not(any(
     all(target_os = "linux", target_arch = "x86_64"),
     all(target_os = "macos", target_arch = "aarch64"),
@@ -69,9 +69,9 @@ pub const LAUNCHER_ASSET: Option<&str> = Some("horizon-launcher-windows-x64.zip"
 pub const LAUNCHER_ASSET: Option<&str> = None;
 
 const LAUNCHER_BINARY: &str = if cfg!(windows) {
-    "horizon-launcher.exe"
+    "vespera-launcher.exe"
 } else {
-    "horizon-launcher"
+    "vespera-launcher"
 };
 
 pub(crate) const CLIENT: &str = if cfg!(windows) {
@@ -84,7 +84,7 @@ pub(crate) const CLIENT: &str = if cfg!(windows) {
 /// one is set (`proxy`).
 fn agent(url: &str) -> ureq::Agent {
     crate::proxy::agent(
-        ureq::AgentBuilder::new().user_agent(&format!("horizon-launcher/{VERSION}")),
+        ureq::AgentBuilder::new().user_agent(&format!("vespera-launcher/{VERSION}")),
         url,
     )
     .build()
@@ -370,9 +370,9 @@ impl Default for Links {
     /// What the launcher uses until (or unless) it can read links.json.
     fn default() -> Self {
         Self {
-            discord: "https://discord.gg/HcTeMZxe5E".into(),
-            sponsor: "https://github.com/sponsors/ludovic111".into(),
-            website: "https://playhorizon.dev".into(),
+            discord: String::new(),
+            sponsor: String::new(),
+            website: "https://github.com/mel0k1/Vespera".into(),
         }
     }
 }
@@ -413,7 +413,7 @@ pub fn data_dir() -> PathBuf {
     }
     dirs::data_dir()
         .unwrap_or_else(std::env::temp_dir)
-        .join("horizon-launcher")
+        .join("vespera-launcher")
 }
 
 fn versions_dir() -> PathBuf {
@@ -557,7 +557,7 @@ fn unpack(archive: &Path, url: &str, to: &Path) -> Result<(), String> {
 pub fn install(release: &Release, progress: impl Fn(f32)) -> Result<(), String> {
     let tag = release.tag.as_str();
     if !is_game_tag(tag) {
-        return Err(format!("{tag} is not a Horizon release."));
+        return Err(format!("{tag} is not a Vespera release."));
     }
     let sha256 = signed_digest(tag, ASSET.unwrap_or_default())?;
     install_as(release, tag, &sha256, progress)
@@ -584,7 +584,7 @@ pub(crate) fn install_as(
     let unpacked = partial.join("unpacked");
     unpack(&archive, &url, &unpacked)?;
     progress(0.97);
-    // The archives hold one top folder (horizon-linux-x86_64/...); the version folder is its contents.
+    // The archives hold one top folder (vespera-linux-x86_64/...); the version folder is its contents.
     let entries: Vec<_> = fs::read_dir(&unpacked)
         .map_err(|e| e.to_string())?
         .flatten()
@@ -674,7 +674,7 @@ pub fn resources_summary(prepared: bool, sounds: bool, version: &str) -> String 
     use crate::i18n::trf;
     match (prepared, sounds) {
         (false, _) => trf(
-            "Not prepared. Horizon needs the files of your own Minecraft {version}.",
+            "Not prepared. Vespera needs the files of your own Minecraft {version}.",
             &[("version", version)],
         ),
         (true, true) => trf("Prepared for Minecraft {version}", &[("version", version)]),
@@ -1237,7 +1237,7 @@ fn download_for_owner(
                 sources::Os::Windows => "windows",
             };
             mojang::download(pins, dir, os, 8, fetch, &mojang::CANCEL, log).map_err(|e| {
-                format!("\n  • Horizon tried to download {v} from Mojang for {name}, but: {e}")
+                format!("\n  • Vespera tried to download {v} from Mojang for {name}, but: {e}")
             })
         }
         // An owner by its last answer, who can't be asked now.
@@ -1247,12 +1247,11 @@ fn download_for_owner(
             pass.offline.unwrap_or_default()
         )),
         Err(_) if !accounts.accounts.is_empty() => Err(
-            "\n  • No signed-in account owns Minecraft: Java Edition, so Horizon can't download it."
+            "\n  • No signed-in account owns Minecraft: Java Edition, so Vespera can't download it."
                 .into(),
         ),
         Err(_) => Err(format!(
-            "\n  • Or sign in with the Microsoft account that owns Minecraft: Horizon then \
-             downloads {v} from Mojang itself."
+            "\n  • Or sign in with the Microsoft account that owns Minecraft: Java Edition, and Vespera downloads {v} from Mojang itself."
         )),
     }
 }
@@ -1310,7 +1309,7 @@ fn java(
     let runtime = data_dir().join("minecraft").join("runtime");
     let home = mojang::java_runtime(&component, &runtime, 8, &fetch, &mojang::CANCEL, log)
         .map_err(|e| {
-        format!("{missing}\n  • Horizon also tried to download Minecraft's own Java from Mojang, but: {e}")
+        format!("{missing}\n  • Vespera also tried to download Minecraft's own Java from Mojang, but: {e}")
     })?;
     find(major, &[home]).map(|jdk| jdk.home())
 }
@@ -1392,7 +1391,7 @@ pub fn preparer(
             .and_then(|lock| sources::Pins::read(&lock))
             .ok_or("The version's research-lock.json doesn't pin the Minecraft files")?;
         let own = data_dir().join("minecraft");
-        let mut known = vec![("Horizon's own download", own.clone())];
+        let mut known = vec![("Vespera's own download", own.clone())];
         known.extend(
             sources::Folders::current()
                 .map(|f| sources::known_folders(sources::Os::current(), &f))
@@ -1825,7 +1824,7 @@ pub fn client_command(tag: &str) -> Command {
     cmd
 }
 
-/// The game's program: on macOS the one inside the version's Horizon.app, so the Dock and Cmd+Tab
+/// The game's program: on macOS the one inside the version's Vespera.app, so the Dock and Cmd+Tab
 /// show Horizon's name and icon (game_app.rs); the bare binary elsewhere, or if that fails.
 fn client_program(tag: &str) -> PathBuf {
     let dir = version_dir(tag);
@@ -1924,7 +1923,7 @@ pub fn need_prepared(tag: &str) -> Result<(), String> {
 /// offline.
 pub fn client(tag: &str) -> Result<Command, String> {
     let (session, offline) = account::session_for_game(&game_home())
-        .map_err(|refused| format!("{refused} Sign in with `horizon-launcher account sign-in`."))?;
+        .map_err(|refused| format!("{refused} Sign in with `vespera-launcher account sign-in`."))?;
     need_prepared(tag)?;
     complete_assets(tag);
     crate::browser::horizon::before_play(&game_home());
@@ -1968,7 +1967,7 @@ pub fn release_notes(tag: Option<&str>) -> Result<Release, String> {
         Some(tag) => releases
             .into_iter()
             .find(|r| r.tag == tag)
-            .ok_or_else(|| format!("No Horizon release is tagged {tag}.")),
+            .ok_or_else(|| format!("No Vespera release is tagged {tag}.")),
         None => releases
             .into_iter()
             .next()
@@ -2134,7 +2133,7 @@ pub fn install_tag(tag: &str, as_update: bool, progress: impl Fn(f32)) -> Result
         releases
             .iter()
             .find(|r| r.tag == tag)
-            .ok_or_else(|| format!("No Horizon release is tagged {tag}."))?
+            .ok_or_else(|| format!("No Vespera release is tagged {tag}."))?
     };
     if release.asset.is_none() {
         return Err(format!("{} has no build for this platform.", release.tag));
@@ -2160,10 +2159,10 @@ pub fn self_update_allowed() -> bool {
     !cfg!(debug_assertions) && std::env::var_os("HORIZON_LAUNCHER_NO_SELF_UPDATE").is_none()
 }
 
-/// The version in `horizon-launcher --version`'s output (`horizon-launcher 0.1.5`).
+/// The version in `vespera-launcher --version`'s output (`vespera-launcher 0.1.5`).
 fn parse_version_output(out: &str) -> Option<&str> {
     out.trim()
-        .strip_prefix("horizon-launcher ")
+        .strip_prefix("vespera-launcher ")
         .map(str::trim)
         .filter(|v| !v.is_empty())
 }
@@ -2207,8 +2206,8 @@ fn replace_binary(new: &Path, _exe: &Path) -> std::io::Result<()> {
     self_replace::self_replace(new)
 }
 
-/// The app bundle the launcher runs from (`…/Horizon.app` for `…/Horizon.app/Contents/MacOS/
-/// horizon-launcher`), or None for a bare binary, as launchers before the .app shipped.
+/// The app bundle the launcher runs from (`…/Vespera.app` for `…/Vespera.app/Contents/MacOS/
+/// vespera-launcher`), or None for a bare binary, as launchers before the .app shipped.
 pub fn app_bundle(exe: &Path) -> Option<&Path> {
     let macos = exe.parent()?;
     let contents = macos.parent()?;
@@ -2330,9 +2329,9 @@ pub fn self_update(release: &Release, progress: impl Fn(f32)) -> Result<(), Stri
     download(&url, size, &sha256, &archive, &progress)?;
     let unpacked = work.join("unpacked");
     unpack(&archive, &url, &unpacked)?;
-    // A launcher inside Horizon.app replaces the whole bundle (its Info.plist, icon and
+    // A launcher inside Vespera.app replaces the whole bundle (its Info.plist, icon and
     // signature belong with the binary); a bare binary, as older launchers are, only the binary,
-    // which the macOS archive also holds (Horizon.app/Contents/MacOS/horizon-launcher).
+    // which the macOS archive also holds (Vespera.app/Contents/MacOS/vespera-launcher).
     if let Some(app) = app_bundle(exe_path()) {
         if let Some(new) = find_app(&unpacked) {
             replace_bundle(&new, app)?;
@@ -2967,8 +2966,8 @@ mod tests {
         assert_eq!(launcher_version("v2026.10.13"), None);
         assert_eq!(launcher_version("launcher-vx"), None);
         let list = serde_json::json!([
-            {"tag_name": "v2026.10.12", "assets": [{"name": "horizon-linux-x86_64.tar.gz", "browser_download_url": "u", "size": 1}]},
-            {"tag_name": "launcher-v9.0.0", "assets": [{"name": "horizon-launcher-linux-x86_64.tar.gz", "browser_download_url": "u", "size": 1}]},
+            {"tag_name": "v2026.10.12", "assets": [{"name": "vespera-linux-x86_64.tar.gz", "browser_download_url": "u", "size": 1}]},
+            {"tag_name": "launcher-v9.0.0", "assets": [{"name": "vespera-launcher-linux-x86_64.tar.gz", "browser_download_url": "u", "size": 1}]},
             {"tag_name": "v2026.10.13", "assets": []},
             {"tag_name": "launcher-v0.0.1", "draft": true, "assets": []},
         ]);
@@ -2988,7 +2987,7 @@ mod tests {
     /// previous one the newest again: it is what `install latest` and the update check offer.
     #[test]
     fn withdrawn_release_is_never_offered() {
-        let asset = ASSET.unwrap_or("horizon-linux-x86_64.tar.gz");
+        let asset = ASSET.unwrap_or("vespera-linux-x86_64.tar.gz");
         let list = serde_json::json!([
             {"tag_name": "v2026.10.15.1", "draft": true, "assets": [{"name": asset, "browser_download_url": "bad", "size": 1}]},
             {"tag_name": "v2026.10.15", "assets": [{"name": asset, "browser_download_url": "good", "size": 1}]},
@@ -3015,7 +3014,7 @@ mod tests {
     /// had one installed waits for the next release instead of going back.
     #[test]
     fn updates_follow_every_release_and_leave_the_old_alpha_ones_out() {
-        let asset = ASSET.unwrap_or("horizon-linux-x86_64.tar.gz");
+        let asset = ASSET.unwrap_or("vespera-linux-x86_64.tar.gz");
         let list = serde_json::json!([
             {"tag_name": "v0.2.13", "assets": [{"name": asset, "browser_download_url": "n", "size": 1}]},
             {"tag_name": "v0.2.12", "prerelease": true, "assets": [{"name": asset, "browser_download_url": "a", "size": 1}]},
@@ -3152,7 +3151,7 @@ mod tests {
         assert!(launcher_update(&[r(own_tag())]).is_none());
         assert_eq!(launcher_version(&own_tag()), Some(VERSION));
         assert_eq!(
-            parse_version_output(&format!("horizon-launcher {VERSION}\n")),
+            parse_version_output(&format!("vespera-launcher {VERSION}\n")),
             Some(VERSION)
         );
     }
@@ -3248,7 +3247,7 @@ mod tests {
         );
         assert_eq!(compare_versions("launcher@0.2.0", "v0.2.0"), Equal);
 
-        let asset = ASSET.unwrap_or("horizon-linux-x86_64.tar.gz");
+        let asset = ASSET.unwrap_or("vespera-linux-x86_64.tar.gz");
         let list = serde_json::json!([
             {"tag_name": "v0.2.0", "prerelease": true, "assets": [{"name": asset, "browser_download_url": "b", "size": 1}]},
             {"tag_name": "v2026.10.21", "prerelease": true, "assets": [{"name": asset, "browser_download_url": "d", "size": 1}]},
@@ -3395,12 +3394,12 @@ mod tests {
     #[test]
     fn links_fall_back_to_the_built_in_ones() {
         let defaults = Links::default();
-        assert_eq!(defaults.discord, "https://discord.gg/HcTeMZxe5E");
-        assert_eq!(defaults.sponsor, "https://github.com/sponsors/ludovic111");
-        assert_eq!(defaults.website, "https://playhorizon.dev");
+        assert_eq!(defaults.discord, "");
+        assert_eq!(defaults.sponsor, "");
+        assert_eq!(defaults.website, "https://github.com/mel0k1/Vespera");
         // The file on main says the same thing as the defaults.
         let file = Links::parse(
-            r#"{"discord": "https://discord.gg/HcTeMZxe5E", "sponsor": "https://github.com/sponsors/ludovic111", "website": "https://playhorizon.dev"}"#,
+            r#"{"discord": "", "sponsor": "", "website": "https://github.com/mel0k1/Vespera"}"#,
         );
         assert_eq!(file, defaults);
         // Unreadable or missing, offline included: the defaults.
@@ -3431,7 +3430,7 @@ mod tests {
     #[test]
     fn a_new_version_reuses_resources_prepared_by_a_compatible_one() {
         let versions =
-            std::env::temp_dir().join(format!("horizon-launcher-test-{}", std::process::id()));
+            std::env::temp_dir().join(format!("vespera-launcher-test-{}", std::process::id()));
         let _ = fs::remove_dir_all(&versions);
         let oracle = "mods/horizon/src/test/java/dev/horizonlab/parity/VanillaHeightmapOracle.java";
         let camera = "mods/horizon/src/test/java/dev/horizonlab/parity/VanillaCameraOracle.java";
@@ -3538,7 +3537,7 @@ mod tests {
     #[test]
     fn prepared_resources_follow_the_preparers_output_version() {
         let versions = std::env::temp_dir().join(format!(
-            "horizon-launcher-output-test-{}",
+            "vespera-launcher-output-test-{}",
             std::process::id()
         ));
         let _ = fs::remove_dir_all(&versions);
@@ -3634,7 +3633,7 @@ mod tests {
     #[test]
     fn prepared_versions_get_the_run_time_reports_without_preparing_again() {
         let versions = std::env::temp_dir().join(format!(
-            "horizon-launcher-reports-test-{}",
+            "vespera-launcher-reports-test-{}",
             std::process::id()
         ));
         let _ = fs::remove_dir_all(&versions);
@@ -3693,7 +3692,7 @@ mod tests {
     #[test]
     fn prepared_versions_get_what_the_asset_store_adds_without_preparing_again() {
         let dir = std::env::temp_dir().join(format!(
-            "horizon-launcher-packs-test-{}",
+            "vespera-launcher-packs-test-{}",
             std::process::id()
         ));
         let _ = fs::remove_dir_all(&dir);
@@ -3845,20 +3844,20 @@ mod tests {
 
     #[test]
     fn finds_the_app_bundle_around_the_binary() {
-        let exe = Path::new("/Applications/Horizon.app/Contents/MacOS/horizon-launcher");
+        let exe = Path::new("/Applications/Vespera.app/Contents/MacOS/vespera-launcher");
         assert_eq!(
             app_bundle(exe),
-            Some(Path::new("/Applications/Horizon.app"))
+            Some(Path::new("/Applications/Vespera.app"))
         );
-        assert_eq!(app_bundle(Path::new("/Users/me/horizon-launcher")), None);
+        assert_eq!(app_bundle(Path::new("/Users/me/vespera-launcher")), None);
         assert_eq!(
-            app_bundle(Path::new("/x/Contents/MacOS/horizon-launcher")),
+            app_bundle(Path::new("/x/Contents/MacOS/vespera-launcher")),
             None
         );
         let work = std::env::temp_dir().join(format!("horizon-find-app-{}", std::process::id()));
         let _ = fs::remove_dir_all(&work);
-        fs::create_dir_all(work.join("dist/Horizon.app/Contents/MacOS")).unwrap();
-        assert_eq!(find_app(&work), Some(work.join("dist/Horizon.app")));
+        fs::create_dir_all(work.join("dist/Vespera.app/Contents/MacOS")).unwrap();
+        assert_eq!(find_app(&work), Some(work.join("dist/Vespera.app")));
         let _ = fs::remove_dir_all(&work);
     }
 
@@ -3871,17 +3870,17 @@ mod tests {
         let work = std::env::temp_dir().join(format!("horizon-bundle-{}", std::process::id()));
         let _ = fs::remove_dir_all(&work);
         let make = |dir: &Path, version: &str| {
-            let app = dir.join("Horizon.app");
+            let app = dir.join("Vespera.app");
             fs::create_dir_all(app.join("Contents/MacOS")).unwrap();
             fs::create_dir_all(app.join("Contents/Resources")).unwrap();
-            let bin = app.join("Contents/MacOS/horizon-launcher");
+            let bin = app.join("Contents/MacOS/vespera-launcher");
             fs::copy("/usr/bin/true", &bin).unwrap();
             fs::set_permissions(&bin, fs::Permissions::from_mode(0o755)).unwrap();
             fs::write(app.join("Contents/Resources/version"), version).unwrap();
             fs::write(
                 app.join("Contents/Info.plist"),
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<plist version=\"1.0\"><dict>\
-                 <key>CFBundleExecutable</key><string>horizon-launcher</string>\
+                 <key>CFBundleExecutable</key><string>vespera-launcher</string>\
                  <key>CFBundleIdentifier</key><string>dev.horizon.test</string>\
                  <key>CFBundlePackageType</key><string>APPL</string></dict></plist>\n",
             )
@@ -3909,7 +3908,7 @@ mod tests {
         replace_bundle(&new, &installed).unwrap();
         let version = fs::read_to_string(installed.join("Contents/Resources/version")).unwrap();
         assert_eq!(version, "2.0.0");
-        let bin = installed.join("Contents/MacOS/horizon-launcher");
+        let bin = installed.join("Contents/MacOS/vespera-launcher");
         assert!(
             Command::new(&bin).status().unwrap().success(),
             "still executable"
@@ -3927,7 +3926,7 @@ mod tests {
             .collect();
         assert_eq!(
             left,
-            ["Horizon.app"],
+            ["Vespera.app"],
             "nothing staged or moved aside is left"
         );
 
@@ -3945,7 +3944,7 @@ mod tests {
     #[test]
     fn launcher_versions_read_from_the_binary() {
         assert_eq!(
-            parse_version_output("horizon-launcher 0.1.5\n"),
+            parse_version_output("vespera-launcher 0.1.5\n"),
             Some("0.1.5")
         );
         assert_eq!(parse_version_output("something else"), None);
@@ -3956,7 +3955,7 @@ mod tests {
             None
         );
         assert_eq!(
-            installed_launcher_version(Path::new("/nonexistent/horizon-launcher")),
+            installed_launcher_version(Path::new("/nonexistent/vespera-launcher")),
             None
         );
     }
@@ -3968,10 +3967,10 @@ mod tests {
     fn a_replaced_binary_is_replaced_again_at_its_path() {
         use std::os::unix::fs::PermissionsExt;
         let dir =
-            std::env::temp_dir().join(format!("horizon-launcher-replace-{}", std::process::id()));
+            std::env::temp_dir().join(format!("vespera-launcher-replace-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
-        let exe = dir.join("horizon-launcher");
+        let exe = dir.join("vespera-launcher");
         fs::write(&exe, "old").unwrap();
         // Another update swaps the file under the running launcher.
         fs::write(dir.join("other"), "other update").unwrap();
@@ -3999,14 +3998,14 @@ mod tests {
             .map(|e| e.file_name().to_string_lossy().into_owned())
             .collect();
         names.sort();
-        assert_eq!(names, ["horizon-launcher", "new"]);
+        assert_eq!(names, ["vespera-launcher", "new"]);
         let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn crash_reports_are_found_and_summarised() {
         let dir =
-            std::env::temp_dir().join(format!("horizon-launcher-crash-{}", std::process::id()));
+            std::env::temp_dir().join(format!("vespera-launcher-crash-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         let start = std::time::SystemTime::now() - std::time::Duration::from_secs(2);
         assert!(crash_report_in_since(&dir, start).is_none());

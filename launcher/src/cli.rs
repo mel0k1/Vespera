@@ -1,19 +1,19 @@
-//! `horizon-launcher <subcommand>`: the same steps as the window, from a terminal. Every
+//! `vespera-launcher <subcommand>`: the same steps as the window, from a terminal. Every
 //! command goes through `backend`; this file only parses arguments and prints.
 use clap::{Parser, Subcommand};
-use horizon_launcher::account::{self, Accounts};
-use horizon_launcher::backend::{self, Release};
-use horizon_launcher::instances;
-use horizon_launcher::server_list;
+use vespera_launcher::account::{self, Accounts};
+use vespera_launcher::backend::{self, Release};
+use vespera_launcher::instances;
+use vespera_launcher::server_list;
 use std::io::{IsTerminal, Write};
 use std::path::PathBuf;
 use std::process::Command;
 
 #[derive(Parser)]
 #[command(
-    name = "horizon-launcher",
+    name = "vespera-launcher",
     version = backend::VERSION,
-    about = "Installs, prepares and starts Horizon. Without a subcommand, opens the window."
+    about = "Installs, prepares and starts Vespera. Without a subcommand, opens the window."
 )]
 struct Cli {
     /// Print JSON instead of text, where a command has something to report
@@ -339,7 +339,7 @@ enum PackKindArg {
     Shader,
 }
 
-impl From<PackKindArg> for horizon_launcher::packs::Kind {
+impl From<PackKindArg> for vespera_launcher::packs::Kind {
     fn from(k: PackKindArg) -> Self {
         match k {
             PackKindArg::Resource => Self::Resource,
@@ -535,8 +535,8 @@ enum SourceArg {
 }
 
 impl SourceArg {
-    fn get(self) -> Result<Box<dyn horizon_launcher::browser::Source>, String> {
-        use horizon_launcher::browser::{self, SourceId};
+    fn get(self) -> Result<Box<dyn vespera_launcher::browser::Source>, String> {
+        use vespera_launcher::browser::{self, SourceId};
         let id = match self {
             SourceArg::Modrinth => SourceId::Modrinth,
             SourceArg::Curseforge => SourceId::CurseForge,
@@ -818,7 +818,7 @@ fn set_setting(s: &mut backend::Settings, key: &str, value: &str) -> Result<(), 
                 .ok_or_else(|| format!("{value}: say stay, minimize or hide"))?
         }
         "accent" => {
-            use horizon_launcher::themes::Accent;
+            use vespera_launcher::themes::Accent;
             s.accent = Accent::parse(value).ok_or_else(|| {
                 let names: Vec<_> = Accent::ALL.iter().map(|a| a.name()).collect();
                 format!("{value}: say {}", names.join(", "))
@@ -827,14 +827,14 @@ fn set_setting(s: &mut backend::Settings, key: &str, value: &str) -> Result<(), 
         "background" => {
             s.background = match value.trim() {
                 "default" | "" => None,
-                file => Some(horizon_launcher::themes::keep_background(
+                file => Some(vespera_launcher::themes::keep_background(
                     &backend::data_dir(),
                     std::path::Path::new(file),
                 )?),
             }
         }
         "language" => {
-            use horizon_launcher::i18n::Language;
+            use vespera_launcher::i18n::Language;
             s.language = match value.trim() {
                 "system" | "default" => None,
                 code => Some(
@@ -846,7 +846,7 @@ fn set_setting(s: &mut backend::Settings, key: &str, value: &str) -> Result<(), 
         "proxy" => {
             if value == "default" || value.is_empty() {
                 s.proxy = None;
-            } else if let Some(why) = horizon_launcher::proxy::refuse(value) {
+            } else if let Some(why) = vespera_launcher::proxy::refuse(value) {
                 return Err(why);
             } else {
                 s.proxy = Some(value.trim().to_string());
@@ -871,7 +871,7 @@ fn settings_json(s: &backend::Settings) -> serde_json::Value {
         "while_playing": s.while_playing.name(),
         "language": s.language.map_or("system", |l| l.code()),
         "accent": s.accent.name(),
-        "background": horizon_launcher::themes::background(&backend::data_dir(), s.background.as_deref()),
+        "background": vespera_launcher::themes::background(&backend::data_dir(), s.background.as_deref()),
         "no_ai": backend::no_ai(),
     })
 }
@@ -1005,7 +1005,7 @@ fn execute(command: Cmd, as_json: bool) -> Result<(), String> {
                 );
             } else {
                 println!(
-                    "Installed {tag}. Prepare it next: horizon-launcher prepare --version {tag}"
+                    "Installed {tag}. Prepare it next: vespera-launcher prepare --version {tag}"
                 );
             }
         }
@@ -1027,11 +1027,11 @@ fn execute(command: Cmd, as_json: bool) -> Result<(), String> {
             let (folder, target) = match folder {
                 Some(folder) => (folder, None),
                 None => (
-                    horizon_launcher::native_mods::installed_mods(&target.home)?,
+                    vespera_launcher::native_mods::installed_mods(&target.home)?,
                     Some(&target),
                 ),
             };
-            let built = horizon_launcher::native_mods::build(&base, &folder, target, |step| {
+            let built = vespera_launcher::native_mods::build(&base, &folder, target, |step| {
                 eprintln!("{}", step.label())
             })?;
             println!(
@@ -1102,7 +1102,7 @@ fn execute(command: Cmd, as_json: bool) -> Result<(), String> {
                 cmd.arg("--name").arg(name);
             }
             cmd.envs(accounts.look_env());
-            let played = attached(horizon_launcher::launch::wrap(cmd, &instance.launch));
+            let played = attached(vespera_launcher::launch::wrap(cmd, &instance.launch));
             if let Err(e) = instances::record_play(&instance.id, started.elapsed()) {
                 eprintln!("Play time not saved: {e}");
             }
@@ -1171,7 +1171,7 @@ fn execute(command: Cmd, as_json: bool) -> Result<(), String> {
             }
         }
         Cmd::AgentConfig { test: true, .. } => {
-            let tools = horizon_launcher::agents::self_test(backend::exe_path())?;
+            let tools = vespera_launcher::agents::self_test(backend::exe_path())?;
             if as_json {
                 json(serde_json::json!({ "answered": true, "tools": tools }));
             } else {
@@ -1179,7 +1179,7 @@ fn execute(command: Cmd, as_json: bool) -> Result<(), String> {
             }
         }
         Cmd::AgentConfig { client, .. } => {
-            use horizon_launcher::agents;
+            use vespera_launcher::agents;
             let exe = backend::exe_path();
             if as_json {
                 let mut all = agents::json(exe);
@@ -1217,7 +1217,7 @@ fn execute(command: Cmd, as_json: bool) -> Result<(), String> {
                 let value = value.ok_or("settings KEY VALUE: the value is missing")?;
                 set_setting(&mut settings, &key, &value)?;
                 settings.save();
-                horizon_launcher::proxy::announce(settings.proxy.clone());
+                vespera_launcher::proxy::announce(settings.proxy.clone());
             }
             let all = settings_json(&settings);
             if as_json {
@@ -1247,7 +1247,7 @@ fn execute(command: Cmd, as_json: bool) -> Result<(), String> {
             }
         }
         Cmd::ShareLog { instance } => {
-            use horizon_launcher::game_log;
+            use vespera_launcher::game_log;
             let i = match instance {
                 Some(name) => instances::find(&name)?,
                 None => instances::selected(),
@@ -1265,7 +1265,7 @@ fn execute(command: Cmd, as_json: bool) -> Result<(), String> {
             } else {
                 println!("{}", shared.url);
                 println!(
-                    "Delete it: horizon-launcher unshare-log {}:{}",
+                    "Delete it: vespera-launcher unshare-log {}:{}",
                     shared.id, shared.token
                 );
             }
@@ -1274,7 +1274,7 @@ fn execute(command: Cmd, as_json: bool) -> Result<(), String> {
             let (id, token) = shared
                 .split_once(':')
                 .ok_or("Give the \"<id>:<token>\" share-log printed.")?;
-            horizon_launcher::game_log::unshare(&horizon_launcher::game_log::Shared {
+            vespera_launcher::game_log::unshare(&vespera_launcher::game_log::Shared {
                 url: String::new(),
                 id: id.into(),
                 token: token.into(),
@@ -1296,11 +1296,11 @@ fn execute(command: Cmd, as_json: bool) -> Result<(), String> {
             settings.desktop_entry = Some(!remove);
             settings.save();
             if remove {
-                horizon_launcher::desktop::remove()?;
-                println!("Removed Horizon from the applications menu.");
+                vespera_launcher::desktop::remove()?;
+                println!("Removed Vespera from the applications menu.");
             } else {
-                horizon_launcher::desktop::install(backend::exe_path())?;
-                println!("Horizon is in the applications menu.");
+                vespera_launcher::desktop::install(backend::exe_path())?;
+                println!("Vespera is in the applications menu.");
             }
         }
         Cmd::Worlds { action } => worlds(
@@ -1333,7 +1333,7 @@ fn execute(command: Cmd, as_json: bool) -> Result<(), String> {
 }
 
 fn rust(action: RustCmd, as_json: bool) -> Result<(), String> {
-    use horizon_launcher::rust_toolchain as rust;
+    use vespera_launcher::rust_toolchain as rust;
     match action {
         RustCmd::Status => {
             let installed = rust::installed();
@@ -1351,7 +1351,7 @@ fn rust(action: RustCmd, as_json: bool) -> Result<(), String> {
                 match (&installed, &version) {
                     (Some(t), Some(v)) => println!("{v} in {}", t.dir.display()),
                     _ => println!(
-                        "Rust {} is not installed (`horizon-launcher rust install`).",
+                        "Rust {} is not installed (`vespera-launcher rust install`).",
                         rust::VERSION
                     ),
                 }
@@ -1391,12 +1391,12 @@ fn update(check: bool, as_json: bool) -> Result<(), String> {
         return Ok(());
     }
     match &updates.horizon {
-        None => println!("Horizon: up to date."),
-        Some(r) if check => println!("Horizon: {} is available.", r.tag),
+        None => println!("Vespera: up to date."),
+        Some(r) if check => println!("Vespera: {} is available.", r.tag),
         Some(r) => {
             let tag =
                 backend::install_tag(&r.tag, true, progress(format!("Installing {}", r.tag)))?;
-            println!("Horizon: installed {tag}.");
+            println!("Vespera: installed {tag}.");
         }
     }
     match &updates.launcher {
@@ -1426,7 +1426,7 @@ fn account_command(action: AccountCmd, as_json: bool) -> Result<(), String> {
         accounts
             .find(who)
             .cloned()
-            .ok_or_else(|| format!("No signed-in account {who}. See `horizon-launcher account`."))
+            .ok_or_else(|| format!("No signed-in account {who}. See `vespera-launcher account`."))
     };
     match action {
         AccountCmd::List => {
@@ -1446,7 +1446,7 @@ fn account_command(action: AccountCmd, as_json: bool) -> Result<(), String> {
             } else if accounts.accounts.is_empty() && accounts.offline.is_empty() {
                 println!(
                     "No Microsoft account signed in. Play needs one that owns Minecraft: Java \
-                     Edition: horizon-launcher account sign-in"
+                     Edition: vespera-launcher account sign-in"
                 );
             } else {
                 for a in &accounts.accounts {
@@ -1532,7 +1532,7 @@ fn account_command(action: AccountCmd, as_json: bool) -> Result<(), String> {
             no_skin,
             no_cape,
         } => {
-            use horizon_launcher::skins::{self, Model};
+            use vespera_launcher::skins::{self, Model};
             let name = accounts
                 .offline
                 .iter()
@@ -1590,7 +1590,7 @@ fn account_command(action: AccountCmd, as_json: bool) -> Result<(), String> {
 
 /// `data`: the same consent as Settings → Data collection.
 fn data(action: DataCmd, as_json: bool) -> Result<(), String> {
-    use horizon_launcher::telemetry;
+    use vespera_launcher::telemetry;
     let review = |item: &horizon_telemetry::Item, yes: bool| -> Result<bool, String> {
         println!(
             "{}",
@@ -1664,13 +1664,13 @@ fn data(action: DataCmd, as_json: bool) -> Result<(), String> {
 }
 
 fn servers(action: ServersCmd, as_json: bool) -> Result<(), String> {
-    use horizon_launcher::servers::{self, NewServer, World};
+    use vespera_launcher::servers::{self, NewServer, World};
     let find = |which: &str| {
         servers::list()
             .into_iter()
             .find(|e| e.name == which || e.dir == std::path::Path::new(which))
             .ok_or_else(|| {
-                format!("No server called {which}: `horizon-launcher servers` lists them")
+                format!("No server called {which}: `vespera-launcher servers` lists them")
             })
     };
     match action {
@@ -1688,7 +1688,7 @@ fn servers(action: ServersCmd, as_json: bool) -> Result<(), String> {
                         .collect(),
                 ));
             } else if list.is_empty() {
-                println!("No server yet: horizon-launcher servers create --accept-eula");
+                println!("No server yet: vespera-launcher servers create --accept-eula");
             }
             for e in list.iter().filter(|_| !as_json) {
                 println!(
@@ -1741,7 +1741,7 @@ fn servers(action: ServersCmd, as_json: bool) -> Result<(), String> {
             let tag = backend::resolve_version(version.as_deref())?;
             servers::set_up(&tag)?;
             println!(
-                "Servers run Horizon {}",
+                "Servers run Vespera {}",
                 servers::runtime_release().unwrap_or(tag)
             );
         }
@@ -1769,8 +1769,8 @@ fn servers(action: ServersCmd, as_json: bool) -> Result<(), String> {
 }
 
 fn mods(action: ModsCmd, as_json: bool) -> Result<(), String> {
-    use horizon_launcher::browser::{horizon, installed, Kind, Query, SourceId};
-    use horizon_launcher::modpacks;
+    use vespera_launcher::browser::{horizon, installed, Kind, Query, SourceId};
+    use vespera_launcher::modpacks;
     // What the browser installs goes into an instance's game folder; Java mods' checks are kept
     // in the default one, shared by all.
     let home = match &action {
@@ -1806,7 +1806,7 @@ fn mods(action: ModsCmd, as_json: bool) -> Result<(), String> {
                 json(list.iter().map(entry_json).collect());
             } else if list.is_empty() {
                 println!(
-                    "Nothing installed from the browser yet: horizon-launcher mods search <text>"
+                    "Nothing installed from the browser yet: vespera-launcher mods search <text>"
                 );
             }
             for e in list.iter().filter(|_| !as_json) {
@@ -1852,7 +1852,7 @@ fn mods(action: ModsCmd, as_json: bool) -> Result<(), String> {
                 }).collect());
             } else {
                 if datapack && !found.is_empty() {
-                    println!("{}\n", horizon_launcher::browser::DATAPACK_SUPPORT);
+                    println!("{}\n", vespera_launcher::browser::DATAPACK_SUPPORT);
                 }
                 for p in &found {
                     let support = p.support();
@@ -1877,9 +1877,9 @@ fn mods(action: ModsCmd, as_json: bool) -> Result<(), String> {
                         p.summary
                     );
                     if unchecked {
-                        println!("  horizon-launcher mods check {}", p.slug);
+                        println!("  vespera-launcher mods check {}", p.slug);
                     } else if datapack {
-                        println!("  horizon-launcher mods install {} --world <world>", p.slug);
+                        println!("  vespera-launcher mods install {} --world <world>", p.slug);
                     } else if let Some(why) = support.reason() {
                         println!("  {why}");
                     }
@@ -1896,7 +1896,7 @@ fn mods(action: ModsCmd, as_json: bool) -> Result<(), String> {
             if p.kind != Kind::Mod {
                 return Err(format!("{} isn't a Java mod.", p.title));
             }
-            let (version, c) = horizon_launcher::browser::java::check_project(
+            let (version, c) = vespera_launcher::browser::java::check_project(
                 &home,
                 &*source,
                 &p,
@@ -1936,7 +1936,7 @@ fn mods(action: ModsCmd, as_json: bool) -> Result<(), String> {
             let source = source.get()?;
             let p = source.project(&project)?;
             if let Some(world) = world {
-                let world = horizon_launcher::worlds::find(&home, &world)?;
+                let world = vespera_launcher::worlds::find(&home, &world)?;
                 let done = installed::install_datapack(
                     &*source,
                     &p,
@@ -1981,7 +1981,7 @@ fn mods(action: ModsCmd, as_json: bool) -> Result<(), String> {
                         pack.version,
                         pack.mods.join(", ")
                     );
-                    println!("Play it: horizon-launcher modpack play {}", pack.id);
+                    println!("Play it: vespera-launcher modpack play {}", pack.id);
                 }
                 return Ok(());
             }
@@ -1996,7 +1996,7 @@ fn mods(action: ModsCmd, as_json: bool) -> Result<(), String> {
                     .map(|t| backend::resources(&t));
                 let pack = modpacks::import_and_port(&file, resources.as_deref(), log)?;
                 println!("{} ({})", modpacks::outcome(&pack), pack.summary());
-                println!("Play it: horizon-launcher modpack play {}", pack.slug);
+                println!("Play it: vespera-launcher modpack play {}", pack.slug);
                 return Ok(());
             }
             let done = installed::install(&*source, &p, everything, &home, &line)?;
@@ -2027,7 +2027,7 @@ fn mods(action: ModsCmd, as_json: bool) -> Result<(), String> {
                 });
             }
             for e in chosen {
-                let Some(source) = horizon_launcher::browser::source(e.source) else {
+                let Some(source) = vespera_launcher::browser::source(e.source) else {
                     println!("{}: {} isn't available here.", e.title, e.source.label());
                     continue;
                 };
@@ -2069,7 +2069,7 @@ fn mods(action: ModsCmd, as_json: bool) -> Result<(), String> {
                     return Err(format!("{} was taken down: {}", e.title, r.reason));
                 }
             }
-            horizon_launcher::browser::java::set_enabled(&home, id, on)?;
+            vespera_launcher::browser::java::set_enabled(&home, id, on)?;
             println!("{} is {}.", e.title, if on { "on" } else { "off" });
         }
     }
@@ -2154,7 +2154,7 @@ fn instance(action: InstanceCmd, as_json: bool) -> Result<(), String> {
             mangohud,
             dedicated_gpu,
         } => {
-            use horizon_launcher::launch;
+            use vespera_launcher::launch;
             let env = env.as_deref().map(launch::parse_env).transpose()?;
             let [gamemode, mangohud, dedicated_gpu] =
                 [gamemode, mangohud, dedicated_gpu].map(|v| v.as_deref().map(on_off));
@@ -2235,7 +2235,7 @@ fn instance(action: InstanceCmd, as_json: bool) -> Result<(), String> {
             }
         }
         InstanceCmd::Shortcut { instance, remove } => {
-            use horizon_launcher::shortcut;
+            use vespera_launcher::shortcut;
             let i = match instance {
                 Some(name) => instances::find(&name)?,
                 None => instances::selected(),
@@ -2256,8 +2256,8 @@ fn instance(action: InstanceCmd, as_json: bool) -> Result<(), String> {
             }
         }
         InstanceCmd::Import { file, instance } => {
-            use horizon_launcher::import::{self, Dropped};
-            use horizon_launcher::modpacks;
+            use vespera_launcher::import::{self, Dropped};
+            use vespera_launcher::modpacks;
             match import::what(&file)? {
                 Dropped::Instance => {
                     let i = import::import_instance(&file, &|line, _| eprintln!("{line}"))?;
@@ -2265,7 +2265,7 @@ fn instance(action: InstanceCmd, as_json: bool) -> Result<(), String> {
                         json(value(&i, false));
                     } else {
                         println!(
-                            "Made the instance {} in {}: horizon-launcher instance select \"{}\"",
+                            "Made the instance {} in {}: vespera-launcher instance select \"{}\"",
                             i.name,
                             i.home.display(),
                             i.name
@@ -2276,7 +2276,7 @@ fn instance(action: InstanceCmd, as_json: bool) -> Result<(), String> {
                     let pack = modpacks::import(&file, &|line: String| eprintln!("{line}"))?;
                     println!("{} ({})", modpacks::outcome(&pack), pack.summary());
                     println!(
-                        "Port and play it: horizon-launcher modpack port {}",
+                        "Port and play it: vespera-launcher modpack port {}",
                         pack.slug
                     );
                 }
@@ -2285,15 +2285,15 @@ fn instance(action: InstanceCmd, as_json: bool) -> Result<(), String> {
                         Some(name) => instances::find(&name)?,
                         None => instances::selected(),
                     };
-                    let p = horizon_launcher::packs::add(&i.home, &file)?;
+                    let p = vespera_launcher::packs::add(&i.home, &file)?;
                     println!(
-                        "Added {} to {}: turn it on with horizon-launcher packs on",
+                        "Added {} to {}: turn it on with vespera-launcher packs on",
                         p.title, i.name
                     );
                 }
                 Dropped::DataPack => {
                     return Err(format!(
-                        "{} is a data pack: put it into a world with horizon-launcher worlds \
+                        "{} is a data pack: put it into a world with vespera-launcher worlds \
                          datapack-add <world> <file>",
                         file.display()
                     ))
@@ -2306,7 +2306,7 @@ fn instance(action: InstanceCmd, as_json: bool) -> Result<(), String> {
             world,
             out,
         } => {
-            use horizon_launcher::export::{self, Format};
+            use vespera_launcher::export::{self, Format};
             let i = match instance {
                 Some(name) => instances::find(&name)?,
                 None => instances::selected(),
@@ -2317,7 +2317,7 @@ fn instance(action: InstanceCmd, as_json: bool) -> Result<(), String> {
             };
             let worlds = world
                 .iter()
-                .map(|w| horizon_launcher::worlds::find(&i.home, w).map(|w| w.folder))
+                .map(|w| vespera_launcher::worlds::find(&i.home, w).map(|w| w.folder))
                 .collect::<Result<Vec<_>, _>>()?;
             let linked = match format {
                 Format::Mrpack => export::linkable(&i.home, &export::from_modrinth),
@@ -2356,7 +2356,7 @@ fn instance(action: InstanceCmd, as_json: bool) -> Result<(), String> {
 }
 
 fn game_packs(action: PacksCmd, as_json: bool) -> Result<(), String> {
-    use horizon_launcher::packs::{self, Kind};
+    use vespera_launcher::packs::{self, Kind};
     let home = |instance: Option<String>| -> Result<PathBuf, String> {
         Ok(match instance {
             Some(name) => instances::find(&name)?.home,
@@ -2428,11 +2428,11 @@ fn game_packs(action: PacksCmd, as_json: bool) -> Result<(), String> {
 
 fn set_pack(
     home: &std::path::Path,
-    kind: horizon_launcher::packs::Kind,
+    kind: vespera_launcher::packs::Kind,
     query: &str,
     on: bool,
 ) -> Result<(), String> {
-    use horizon_launcher::packs;
+    use vespera_launcher::packs;
     let pack = packs::find(home, kind, query)?;
     packs::set_enabled(home, &pack, on)?;
     println!("{} is {}.", pack.title, if on { "on" } else { "off" });
@@ -2440,7 +2440,7 @@ fn set_pack(
 }
 
 fn screenshots(action: ScreenshotsCmd, as_json: bool) -> Result<(), String> {
-    use horizon_launcher::screenshots;
+    use vespera_launcher::screenshots;
     let home = |instance: Option<String>| -> Result<PathBuf, String> {
         Ok(match instance {
             Some(name) => instances::find(&name)?.home,
@@ -2532,8 +2532,8 @@ fn multiplayer(action: MultiplayerCmd, as_json: bool) -> Result<(), String> {
 }
 
 fn worlds(action: WorldsCmd, as_json: bool) -> Result<(), String> {
-    use horizon_launcher::datapacks;
-    use horizon_launcher::worlds::{self, World};
+    use vespera_launcher::datapacks;
+    use vespera_launcher::worlds::{self, World};
     let home = |instance: Option<String>| -> Result<PathBuf, String> {
         Ok(match instance {
             Some(name) => instances::find(&name)?.home,
@@ -2635,8 +2635,8 @@ fn worlds(action: WorldsCmd, as_json: bool) -> Result<(), String> {
 }
 
 fn modpack(action: ModpackCmd, as_json: bool) -> Result<(), String> {
-    use horizon_launcher::browser::horizon;
-    use horizon_launcher::modpacks::{self, Imported};
+    use vespera_launcher::browser::horizon;
+    use vespera_launcher::modpacks::{self, Imported};
     use horizon_port_pack::report::Status;
     let log = &|line: String| eprintln!("{line}");
     let work = |pack: &str| {
@@ -2679,7 +2679,7 @@ fn modpack(action: ModpackCmd, as_json: bool) -> Result<(), String> {
             let packs = modpacks::list();
             let registry = horizon::pack::list();
             if packs.is_empty() && registry.is_empty() && !as_json {
-                println!("No modpack imported yet: horizon-launcher modpack import <pack>");
+                println!("No modpack imported yet: vespera-launcher modpack import <pack>");
             }
             packs.iter().for_each(show);
             for p in &registry {
@@ -2733,7 +2733,7 @@ mod tests {
     #[test]
     fn play_takes_extra_arguments_that_start_with_hyphens() {
         let cli = Cli::try_parse_from([
-            "horizon-launcher",
+            "vespera-launcher",
             "play",
             "--arg",
             "--server-thread",
@@ -2750,7 +2750,7 @@ mod tests {
     #[test]
     fn game_args_takes_one_line_that_starts_with_hyphens() {
         let cli = Cli::try_parse_from([
-            "horizon-launcher",
+            "vespera-launcher",
             "game-args",
             "--server-thread --render-distance 40",
         ])
@@ -2769,7 +2769,7 @@ mod tests {
     #[test]
     fn mods_commands_name_their_instance() {
         let parse = |args: &[&str]| {
-            let cli = Cli::try_parse_from([&["horizon-launcher", "mods"], args].concat()).unwrap();
+            let cli = Cli::try_parse_from([&["vespera-launcher", "mods"], args].concat()).unwrap();
             match cli.command {
                 Some(Cmd::Mods { action }) => action,
                 _ => panic!("expected mods"),
@@ -2791,7 +2791,7 @@ mod tests {
         assert!(parse(&[]).is_none());
         // Search and Check read no instance: checks are shared.
         assert!(Cli::try_parse_from([
-            "horizon-launcher",
+            "vespera-launcher",
             "mods",
             "search",
             "x",

@@ -291,7 +291,7 @@ mod tests {
     #[test]
     fn jars_only_curseforge_serves_are_left_off_as_coming_soon() {
         use horizon_port_pack::fetch::Outcome;
-        let work = std::env::temp_dir().join(format!("horizon-launcher-cf-{}", std::process::id()));
+        let work = std::env::temp_dir().join(format!("vespera-launcher-cf-{}", std::process::id()));
         let _ = fs::remove_dir_all(&work);
         fs::create_dir_all(&work).unwrap();
         pipeline::write_json(&work.join("pack.json"), &Pack::default()).unwrap();
@@ -319,7 +319,7 @@ mod tests {
     #[test]
     fn a_profile_has_its_own_home_and_mods() {
         let root =
-            std::env::temp_dir().join(format!("horizon-launcher-pack-{}", std::process::id()));
+            std::env::temp_dir().join(format!("vespera-launcher-pack-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         let work = root.join("ports/small");
         let mut cmd = Command::new("true");

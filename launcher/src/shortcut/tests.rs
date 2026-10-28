@@ -24,14 +24,14 @@ fn names_fit_every_system() {
 #[test]
 fn a_linux_entry_plays_its_instance() {
     let entry = desktop_entry(
-        Path::new("/opt/My Horizon/horizon-launcher"),
+        Path::new("/opt/My Horizon/vespera-launcher"),
         "port:atm",
         "ATM",
     );
     assert!(entry.starts_with("[Desktop Entry]\nType=Application\nName=ATM\n"));
     assert!(entry
-        .contains("\nExec=\"/opt/My Horizon/horizon-launcher\" play --instance \"port:atm\"\n"));
-    assert!(entry.contains("\nTryExec=/opt/My Horizon/horizon-launcher\n"));
+        .contains("\nExec=\"/opt/My Horizon/vespera-launcher\" play --instance \"port:atm\"\n"));
+    assert!(entry.contains("\nTryExec=/opt/My Horizon/vespera-launcher\n"));
     assert!(entry.ends_with("\nX-Horizon-Instance=port:atm\n"));
     let odd = desktop_entry(Path::new("/x"), "a", "Two\nlines");
     assert!(odd.contains("Name=Two lines\n"));
@@ -40,7 +40,7 @@ fn a_linux_entry_plays_its_instance() {
 #[test]
 fn a_mac_app_runs_a_script_that_plays_its_instance() {
     let files = mac_app(
-        Path::new("/Applications/Horizon Launcher.app/Contents/MacOS/horizon-launcher"),
+        Path::new("/Applications/Horizon Launcher.app/Contents/MacOS/vespera-launcher"),
         "it's",
         "Tom & Jerry",
     );
@@ -52,7 +52,7 @@ fn a_mac_app_runs_a_script_that_plays_its_instance() {
     let (path, script, program) = &files[1];
     assert_eq!((*path, *program), ("Contents/MacOS/play", true));
     assert!(String::from_utf8(script.clone()).unwrap().ends_with(
-        "exec '/Applications/Horizon Launcher.app/Contents/MacOS/horizon-launcher' play \
+        "exec '/Applications/Horizon Launcher.app/Contents/MacOS/vespera-launcher' play \
          --instance 'it'\\''s'\n"
     ));
     assert_eq!(files[2].1, MAC_ICON);
@@ -108,13 +108,13 @@ fn read_lnk(b: &[u8]) -> (u32, String, String, Vec<String>) {
 
 #[test]
 fn a_windows_shortcut_is_a_shell_link_to_the_launcher() {
-    let exe = r"C:\Users\Zoé\AppData\Local\Horizon\horizon-launcher.exe";
+    let exe = r"C:\Users\Zoé\AppData\Local\Horizon\vespera-launcher.exe";
     let b = lnk(exe, &windows_args("port:atm"), "Play ATM in Horizon");
     let (flags, ansi, wide, strings) = read_lnk(&b);
     assert_eq!(flags, 0x02 | 0x04 | 0x10 | 0x20 | 0x40 | 0x80);
     assert_eq!(
         ansi,
-        r"C:\Users\Zo?\AppData\Local\Horizon\horizon-launcher.exe"
+        r"C:\Users\Zo?\AppData\Local\Horizon\vespera-launcher.exe"
     );
     assert_eq!(wide, exe);
     assert_eq!(
@@ -139,7 +139,7 @@ fn shortcuts_are_made_found_renamed_and_removed() {
     let bin = trash.clone();
     let trash_fn = move |p: &Path| desktop_seams::to_folder(p, &bin);
     let t: Trash = &trash_fn;
-    let exe = Path::new("/opt/horizon-launcher");
+    let exe = Path::new("/opt/vespera-launcher");
     for system in [System::Linux, System::Mac, System::Windows] {
         let made = make_in(
             system,

@@ -159,8 +159,8 @@ jobs:
           RELEASE_SIGNING_KEY_NEXT: ${{ secrets.RELEASE_SIGNING_KEY_NEXT }}
           EPHEMERAL: ${{ needs.pick.outputs.dry_run == 'true' && 'yes' || '' }}
         run: |
-          bash tools/ci/sign_release.sh nightly dist/horizon-linux-x86_64.tar.gz dist/horizon-windows-x64.zip \
-            dist/horizon-macos-arm64.zip dist/horizon-server-linux-x86_64.tar.gz dist/horizon-source.tar.gz
+          bash tools/ci/sign_release.sh nightly dist/vespera-linux-x86_64.tar.gz dist/vespera-windows-x64.zip \
+            dist/vespera-macos-arm64.zip dist/horizon-server-linux-x86_64.tar.gz dist/horizon-source.tar.gz
       - uses: actions/upload-artifact@v4
         with:
           name: signature
@@ -211,9 +211,9 @@ jobs:
           # A pre-release, never GitHub's latest: launchers on the release channel never see it.
           gh release create nightly --prerelease --latest=false --target "$SHA" \
             --title "Nightly $DATE · ${SHA:0:7}" --notes-file dist/nightly-notes.md \
-            "dist/horizon-linux-x86_64.tar.gz#Nightly game files: Linux (horizon-linux-x86_64.tar.gz)" \
-            "dist/horizon-windows-x64.zip#Nightly game files: Windows (horizon-windows-x64.zip)" \
-            "dist/horizon-macos-arm64.zip#Nightly game files: macOS (horizon-macos-arm64.zip)" \
+            "dist/vespera-linux-x86_64.tar.gz#Nightly game files: Linux (vespera-linux-x86_64.tar.gz)" \
+            "dist/vespera-windows-x64.zip#Nightly game files: Windows (vespera-windows-x64.zip)" \
+            "dist/vespera-macos-arm64.zip#Nightly game files: macOS (vespera-macos-arm64.zip)" \
             "dist/horizon-server-linux-x86_64.tar.gz#Nightly dedicated server for Linux (horizon-server-linux-x86_64.tar.gz)" \
             "dist/horizon-source.tar.gz#Source of this Nightly, commit ${SHA:0:7} (horizon-source.tar.gz; kept for good as the tag $SOURCE_TAG)" \
             dist/SHA256SUMS "${signature[@]}" dist/smoke-test.json

@@ -1,10 +1,10 @@
 //! Linux: the launcher puts itself in the applications menu. It writes
-//! `applications/horizon-launcher.desktop` (pointing at wherever the binary is now) and Horizon's
+//! `applications/vespera-launcher.desktop` (pointing at wherever the binary is now) and Vespera's
 //! icon into the `hicolor` theme, under `$XDG_DATA_HOME` (`~/.local/share` by default), so no root
-//! is needed; `horizon.desktop` (hidden from menus) gives the game's window its icon on Wayland.
+//! is needed; `vespera.desktop` (hidden from menus) gives the game's window its icon on Wayland.
 //! A release build writes it when it starts only if there is no entry yet or the one there starts
 //! a program that is gone ([`repair`]), so a development or test build never takes over a working
-//! entry. Turning the Settings switch on (or `horizon-launcher desktop-entry`) points it at this
+//! entry. Turning the Settings switch on (or `vespera-launcher desktop-entry`) points it at this
 //! binary whatever is there ([`install`]); the switch off and `desktop-entry --remove` take it all
 //! away again.
 use std::ffi::OsStr;
@@ -16,45 +16,45 @@ use std::path::{Path, PathBuf};
 const ICONS: [(&str, &[u8]); 9] = [
     (
         "16x16",
-        include_bytes!("../../packaging/icons/hicolor/16x16/apps/horizon.png"),
+        include_bytes!("../../packaging/icons/hicolor/16x16/apps/vespera.png"),
     ),
     (
         "24x24",
-        include_bytes!("../../packaging/icons/hicolor/24x24/apps/horizon.png"),
+        include_bytes!("../../packaging/icons/hicolor/24x24/apps/vespera.png"),
     ),
     (
         "32x32",
-        include_bytes!("../../packaging/icons/hicolor/32x32/apps/horizon.png"),
+        include_bytes!("../../packaging/icons/hicolor/32x32/apps/vespera.png"),
     ),
     (
         "48x48",
-        include_bytes!("../../packaging/icons/hicolor/48x48/apps/horizon.png"),
+        include_bytes!("../../packaging/icons/hicolor/48x48/apps/vespera.png"),
     ),
     (
         "64x64",
-        include_bytes!("../../packaging/icons/hicolor/64x64/apps/horizon.png"),
+        include_bytes!("../../packaging/icons/hicolor/64x64/apps/vespera.png"),
     ),
     (
         "128x128",
-        include_bytes!("../../packaging/icons/hicolor/128x128/apps/horizon.png"),
+        include_bytes!("../../packaging/icons/hicolor/128x128/apps/vespera.png"),
     ),
     (
         "256x256",
-        include_bytes!("../../packaging/icons/hicolor/256x256/apps/horizon.png"),
+        include_bytes!("../../packaging/icons/hicolor/256x256/apps/vespera.png"),
     ),
     (
         "512x512",
-        include_bytes!("../../packaging/icons/hicolor/512x512/apps/horizon.png"),
+        include_bytes!("../../packaging/icons/hicolor/512x512/apps/vespera.png"),
     ),
     (
         "scalable",
-        include_bytes!("../../packaging/icons/hicolor/scalable/apps/horizon.svg"),
+        include_bytes!("../../packaging/icons/hicolor/scalable/apps/vespera.svg"),
     ),
 ];
 
-const LAUNCHER_ENTRY: &str = "horizon-launcher.desktop";
-const GAME_ENTRY: &str = "horizon.desktop";
-const GAME_ENTRY_TEXT: &str = include_str!("../../packaging/linux/horizon.desktop");
+const LAUNCHER_ENTRY: &str = "vespera-launcher.desktop";
+const GAME_ENTRY: &str = "vespera.desktop";
+const GAME_ENTRY_TEXT: &str = include_str!("../../packaging/linux/vespera.desktop");
 
 /// `$XDG_DATA_HOME`, or `~/.local/share` when it is unset or not absolute (as the spec says).
 pub fn data_home() -> Option<PathBuf> {
@@ -82,15 +82,15 @@ pub fn launcher_entry(exe: &Path) -> String {
     format!(
         "[Desktop Entry]\n\
          Type=Application\n\
-         Name=Horizon\n\
+         Name=Vespera\n\
          GenericName=Game launcher\n\
-         Comment=Install, prepare and play Horizon, Minecraft: Java Edition {minecraft} rewritten in Rust\n\
+         Comment=Install, prepare and play Vespera, Minecraft: Java Edition {minecraft} rewritten in Rust\n\
          Exec={}\n\
          TryExec={}\n\
-         Icon=horizon\n\
+         Icon=vespera\n\
          Terminal=false\n\
          Categories=Game;\n\
-         StartupWMClass=horizon-launcher\n",
+         StartupWMClass=vespera-launcher\n",
         quote(exe),
         exe.display(),
         minecraft = horizon_core::VANILLA_VERSION,
@@ -111,9 +111,9 @@ fn files(data: &Path, exe: &Path) -> Vec<(PathBuf, Vec<u8>)> {
     ];
     for (size, bytes) in ICONS {
         let name = if size == "scalable" {
-            "horizon.svg"
+            "vespera.svg"
         } else {
-            "horizon.png"
+            "vespera.png"
         };
         out.push((
             data.join("icons/hicolor")
@@ -222,7 +222,7 @@ pub(crate) fn target(exe: &Path) -> PathBuf {
 }
 
 /// Registers the launcher whatever entry is there: for the player turning it on (the Settings
-/// switch, `horizon-launcher desktop-entry`).
+/// switch, `vespera-launcher desktop-entry`).
 pub fn install(exe: &Path) -> Result<bool, String> {
     let data = data_home().ok_or("No home folder to put the menu entry in.")?;
     install_in(&data, &target(exe)).map_err(|e| format!("{}: {e}", data.display()))
@@ -254,26 +254,26 @@ mod tests {
 
     #[test]
     fn exec_paths_are_quoted() {
-        let entry = launcher_entry(Path::new("/home/a b/Horizon \"x\"/horizon-launcher"));
-        assert!(entry.contains("Exec=\"/home/a b/Horizon \\\"x\\\"/horizon-launcher\"\n"));
-        assert!(entry.contains("TryExec=/home/a b/Horizon \"x\"/horizon-launcher\n"));
-        assert!(entry.contains("Icon=horizon\n"));
+        let entry = launcher_entry(Path::new("/home/a b/Horizon \"x\"/vespera-launcher"));
+        assert!(entry.contains("Exec=\"/home/a b/Horizon \\\"x\\\"/vespera-launcher\"\n"));
+        assert!(entry.contains("TryExec=/home/a b/Horizon \"x\"/vespera-launcher\n"));
+        assert!(entry.contains("Icon=vespera\n"));
     }
 
     #[test]
     fn installs_follows_a_moved_binary_and_removes() {
-        let data = std::env::temp_dir().join(format!("horizon-desktop-{}", std::process::id()));
+        let data = std::env::temp_dir().join(format!("vespera-desktop-{}", std::process::id()));
         let _ = fs::remove_dir_all(&data);
-        assert!(install_in(&data, Path::new("/opt/a/horizon-launcher")).unwrap());
-        assert!(!install_in(&data, Path::new("/opt/a/horizon-launcher")).unwrap());
-        let png = data.join("icons/hicolor/48x48/apps/horizon.png");
+        assert!(install_in(&data, Path::new("/opt/a/vespera-launcher")).unwrap());
+        assert!(!install_in(&data, Path::new("/opt/a/vespera-launcher")).unwrap());
+        let png = data.join("icons/hicolor/48x48/apps/vespera.png");
         assert!(fs::read(&png).unwrap().starts_with(b"\x89PNG"));
         assert!(data
-            .join("icons/hicolor/scalable/apps/horizon.svg")
+            .join("icons/hicolor/scalable/apps/vespera.svg")
             .exists());
-        assert!(install_in(&data, Path::new("/opt/b/horizon-launcher")).unwrap());
+        assert!(install_in(&data, Path::new("/opt/b/vespera-launcher")).unwrap());
         let entry = fs::read_to_string(data.join("applications").join(LAUNCHER_ENTRY)).unwrap();
-        assert!(entry.contains("Exec=\"/opt/b/horizon-launcher\""));
+        assert!(entry.contains("Exec=\"/opt/b/vespera-launcher\""));
         remove_in(&data).unwrap();
         assert!(!data.join("applications").join(LAUNCHER_ENTRY).exists());
         assert!(!png.exists());
@@ -283,22 +283,22 @@ mod tests {
 
     #[test]
     fn the_target_is_try_exec_else_the_first_word_of_exec() {
-        let ours = launcher_entry(Path::new("/opt/a b/horizon \"x\"/horizon-launcher"));
+        let ours = launcher_entry(Path::new("/opt/a b/horizon \"x\"/vespera-launcher"));
         assert_eq!(
             entry_target(&ours).as_deref(),
-            Some("/opt/a b/horizon \"x\"/horizon-launcher")
+            Some("/opt/a b/horizon \"x\"/vespera-launcher")
         );
         let without_try = ours.replace("TryExec=", "X-Old=");
         assert_eq!(
             entry_target(&without_try).as_deref(),
-            Some("/opt/a b/horizon \"x\"/horizon-launcher")
+            Some("/opt/a b/horizon \"x\"/vespera-launcher")
         );
         let wrapper = "[Desktop Entry]\nExec=flatpak run dev.horizon.Launcher %U\n";
         assert_eq!(entry_target(wrapper).as_deref(), Some("flatpak"));
         // Only the main group counts: an action's Exec is not the launcher.
         let action = "[Desktop Action play]\nExec=/a\n[Desktop Entry]\nExec=/b --x\n";
         assert_eq!(entry_target(action).as_deref(), Some("/b"));
-        assert_eq!(entry_target("[Desktop Entry]\nName=Horizon\n"), None);
+        assert_eq!(entry_target("[Desktop Entry]\nName=Vespera\n"), None);
         assert_eq!(entry_target("[Desktop Entry]\nExec=\nTryExec=\n"), None);
     }
 
@@ -308,11 +308,11 @@ mod tests {
     #[test]
     fn a_start_writes_the_entry_only_when_none_works() {
         let root =
-            std::env::temp_dir().join(format!("horizon-desktop-repair-{}", std::process::id()));
+            std::env::temp_dir().join(format!("vespera-desktop-repair-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         let (data, bin) = (root.join("data"), root.join("bin"));
         fs::create_dir_all(&bin).unwrap();
-        let installed = bin.join("horizon-launcher");
+        let installed = bin.join("vespera-launcher");
         fs::write(&installed, b"").unwrap();
         let entry = data.join("applications").join(LAUNCHER_ENTRY);
         let path = Some(bin.as_os_str());
@@ -323,7 +323,7 @@ mod tests {
         // Ours works: a build elsewhere leaves it alone.
         assert!(!needs_repair_in(&data, path));
         // So does one another launcher wrote, found on PATH or by its path.
-        fs::write(&entry, "[Desktop Entry]\nExec=horizon-launcher %U\n").unwrap();
+        fs::write(&entry, "[Desktop Entry]\nExec=vespera-launcher %U\n").unwrap();
         assert!(!needs_repair_in(&data, path));
         assert!(needs_repair_in(&data, None));
         // The program is gone (a deleted target/ folder, a moved binary): write it again.
@@ -331,7 +331,7 @@ mod tests {
         fs::remove_file(&installed).unwrap();
         assert!(needs_repair_in(&data, path));
         // An entry that starts nothing is broken too.
-        fs::write(&entry, "[Desktop Entry]\nName=Horizon\n").unwrap();
+        fs::write(&entry, "[Desktop Entry]\nName=Vespera\n").unwrap();
         assert!(needs_repair_in(&data, path));
         let _ = fs::remove_dir_all(&root);
     }

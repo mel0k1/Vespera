@@ -155,7 +155,7 @@ impl Instance {
         match (requested, &self.version) {
             (None, Some(pinned)) => backend::resolve_version(Some(pinned)).map_err(|_| {
                 format!(
-                    "{} plays {pinned}, which is not installed: install it, or horizon-launcher \
+                    "{} plays {pinned}, which is not installed: install it, or vespera-launcher \
                      instance version \"{}\" latest",
                     self.name, self.name
                 )
@@ -175,7 +175,7 @@ fn list_in(game_home: &Path, data: &Path) -> Vec<Instance> {
     let store = Store::load(data);
     let mut found = vec![(
         DEFAULT.to_string(),
-        "Horizon".to_string(),
+        "Vespera".to_string(),
         Kind::Default,
         game_home.to_path_buf(),
         game_home.to_path_buf(),
@@ -244,7 +244,7 @@ fn find_in(all: &[Instance], query: &str) -> Result<Instance, String> {
         .or_else(|| all.iter().find(|i| i.name.eq_ignore_ascii_case(q)))
         .or_else(|| all.iter().find(|i| bare(&i.id) == q))
         .cloned()
-        .ok_or_else(|| format!("No instance {q}: horizon-launcher instance list shows them"))
+        .ok_or_else(|| format!("No instance {q}: vespera-launcher instance list shows them"))
 }
 
 /// The instance Play starts: the one picked in the launcher, else Horizon.

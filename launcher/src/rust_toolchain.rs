@@ -394,14 +394,16 @@ mod tests {
         let get = |name: &str| env.iter().find(|(k, _)| k == name).map(|(_, v)| v.clone());
         assert_eq!(get("RUSTUP_TOOLCHAIN"), Some(None));
         assert_eq!(get("RUSTC_WRAPPER"), Some(None));
+        // The expectations come from the same PathBuf joins the command uses: separators per platform.
+        let bin = toolchain.dir.join("bin");
         assert!(get("RUSTC")
             .flatten()
             .unwrap()
-            .starts_with("/rust/1.99.1-x/bin/rustc"));
+            .starts_with(bin.join(exe("rustc")).to_string_lossy().as_ref()));
         assert!(get("PATH")
             .flatten()
             .unwrap()
-            .starts_with("/rust/1.99.1-x/bin"));
+            .starts_with(bin.to_string_lossy().as_ref()));
         assert!(get("CARGO_HOME").flatten().unwrap().ends_with("cargo"));
     }
 }

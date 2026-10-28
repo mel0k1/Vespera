@@ -106,16 +106,16 @@ class ReleaseTrainTests(unittest.TestCase):
 
     def test_the_first_release_of_0_2_says_what_changed(self):
         title, body = train.notes("game", "v0.2.0", [pr(1)], [], previous="v2026.10.21")
-        self.assertTrue(title.startswith("Horizon 0.2.0: "), title)
+        self.assertTrue(title.startswith("Vespera 0.2.0: "), title)
         body = body.removeprefix(train.PLAYERS + "\n\n")
-        self.assertTrue(body.startswith("Horizon is numbered from now on: this is Horizon 0.2.0, the release after 2026.10.21."))
+        self.assertTrue(body.startswith("Vespera is numbered from now on: this is Vespera 0.2.0, the release after 2026.10.21."))
         self.assertIn("`horizon-server update --version v0.2.0`", body)
         title, body = train.notes("launcher", "launcher@0.2.0", [], [], previous="launcher-v0.17.0")
-        self.assertEqual(title, "Horizon launcher 0.2.0")
+        self.assertEqual(title, "Vespera launcher 0.2.0")
         self.assertIn("the release after launcher 0.17.0", body)
         self.assertIn("Rebuilt from the latest main.", body)
         body = train.notes("game", "v0.3.0", [pr(1)], [], previous="v0.2.14")[1]
-        self.assertTrue(body.startswith(train.PLAYERS + "\n\nThe first release of Horizon 0.3."))
+        self.assertTrue(body.startswith(train.PLAYERS + "\n\nThe first release of Vespera 0.3."))
         for version, previous in [("v0.2.1", "v0.2.0"), ("v0.3.0-rc.1", "v0.2.9"), ("v2026.10.23", "v2026.10.21")]:
             body = train.notes("game", version, [pr(1)], [], previous=previous)[1]
             self.assertTrue(body.startswith(train.PLAYERS + "\n\n### Fixed"), (version, body))
@@ -192,22 +192,22 @@ class ReleaseTrainTests(unittest.TestCase):
                pr(7, "Release folder in Rust", labels=["skip-release"]),
                pr(8, "Website footer", paths=[])]
         title, body = train.notes("game", "v2026.10.15.1", prs, ["- Sound cuts out after an hour."])
-        self.assertEqual(title, "Horizon 2026.10.15.1: Controllers, nether portals")
+        self.assertEqual(title, "Vespera 2026.10.15.1: Controllers, nether portals")
         self.assertIn("### New\n- Controllers: gilrs input layer and gameplay (#6)", body)
         self.assertIn("### Fixed\n- Nether portals: vanilla timing and linking (#5, fixes #94)", body)
         self.assertIn("### Known issues\n- Sound cuts out after an hour.", body)
         self.assertNotIn("#7", body)
         self.assertNotIn("#8", body)
-        self.assertIn("Thanks to @cosmic.", body)
+        self.assertIn("Thanks to @cosmic, @ludovic111.", body)
         self.assertLess(body.index("### New"), body.index("### Fixed"))
         title, _ = train.notes("game", "v2026.10.15.2", [pr(9, "Horizon's mark", labels=["feature"]),
                                                          pr(10, "Game menus", labels=["feature"])], [])
-        self.assertEqual(title, "Horizon 2026.10.15.2: Game menus, Horizon's mark", "proper nouns keep their capital")
+        self.assertEqual(title, "Vespera 2026.10.15.2: Game menus, Horizon's mark", "proper nouns keep their capital")
 
     def test_a_long_release_is_named_after_its_first_titles(self):
         prs = [pr(n, f"Change number {n} with a fairly long title") for n in range(1, 10)]
         title, _ = train.notes("game", "v2026.10.15", prs, [])
-        self.assertTrue(title.startswith("Horizon 2026.10.15: Change number 9"), title)
+        self.assertTrue(title.startswith("Vespera 2026.10.15: Change number 9"), title)
         self.assertTrue(title.endswith("more fixes"), title)
         self.assertLess(len(title), 100)
 
@@ -215,13 +215,13 @@ class ReleaseTrainTests(unittest.TestCase):
         prs = [pr(1, "Controllers: rumble", labels=["feature"]), pr(2, "Controllers: menus", labels=["feature"]),
                pr(3, "Maces: smash attacks"), pr(4, "Fix stuck keys when opening Options")]
         title, _ = train.notes("game", "v2026.10.15", prs, [])
-        self.assertEqual(title, "Horizon 2026.10.15: Controllers, stuck keys when opening Options, maces")
+        self.assertEqual(title, "Vespera 2026.10.15: Controllers, stuck keys when opening Options, maces")
         self.assertEqual(train.summary([], [pr(n, f"Change number {n} with a fairly long title") for n in range(4)]),
                          "Change number 3 with a fairly long title and 3 more fixes")
 
     def test_launcher_notes(self):
         title, body = train.notes("launcher", "launcher-v0.2.0", [pr(3, "Launcher: say the self-update succeeded")], [])
-        self.assertEqual(title, "Horizon launcher 0.2.0")
+        self.assertEqual(title, "Vespera launcher 0.2.0")
         self.assertIn("### Fixed\n- Launcher: say the self-update succeeded (#3)", body)
         self.assertNotIn("Known issues", body)
         self.assertNotIn(train.PLAYERS, body)
@@ -230,10 +230,10 @@ class ReleaseTrainTests(unittest.TestCase):
     def test_a_game_release_opens_with_the_way_to_the_launcher(self):
         # GitHub's latest is a game release: whoever lands on it is sent to the launcher first (#1647).
         _, body = train.notes("game", "v0.2.50", [pr(1)], ["- Sound cuts out after an hour."])
-        self.assertTrue(body.startswith('<h3>Want to play? Download the <a href="https://playhorizon.dev">Horizon launcher'))
-        self.assertIn('href="https://github.com/horizon-rust/horizon/releases?q=launcher&amp;expanded=true"', body)
+        self.assertTrue(body.startswith('<h3>Want to play? Download the <a href="https://github.com/mel0k1/Vespera#download">Vespera launcher'))
+        self.assertIn('href="https://github.com/mel0k1/Vespera/releases?q=launcher&amp;expanded=true"', body)
         self.assertNotIn("\n", train.PLAYERS, "one line: one HTML block, which ends at the blank line after it")
-        self.assertEqual(body.count("playhorizon.dev"), 1, "said once, at the top")
+        self.assertEqual(body.count("mel0k1/Vespera"), 2, "the launcher and its releases, said once each")
         _, body = train.notes("game", "v0.2.51", [], [])
         self.assertTrue(body.startswith(train.PLAYERS + "\n\nRebuilt from the latest main."))
 

@@ -49,7 +49,37 @@ Built with [GPUI](https://www.gpui.rs), Zed's UI framework — native, fast, dar
 
 ## What works today
 
-The Rust engine keeps Horizon's audit: **every subsystem matches vanilla in every harness that compares it** — world generation, redstone, mobs and villagers, raids, every command, the HUD and recipe book, resource and data packs, saves from 1.8 to 26.2 upgraded as vanilla does, and joining vanilla servers. The full status table lives in [the upstream README](https://github.com/horizon-rust/horizon#project-status).
+The Rust engine keeps Horizon's audit: **every subsystem matches vanilla in every harness that compares it** — world generation, redstone, mobs and villagers, raids, every command, the HUD and recipe book, resource and data packs, saves from 1.8 to 26.2 upgraded as vanilla does, and joining vanilla servers. <details>
+<summary>The full parity table, subsystem by subsystem</summary>
+
+### Java parity: 100%
+
+Each subsystem scores 0 (absent), 0.25 (started, not playable), 0.5 (playable,
+major vanilla features missing), 0.75 (playable, mostly complete) or 1 (complete
+and verified against vanilla by differential tests). The percentage is the
+average; `tests/test_parity.py` keeps it in sync with this table. Last audited
+2026-10-13 against the harness results: all 281 harnesses pass on Linux, each
+rerun whenever one of its inputs changed, and the Mac mini now runs every one of
+them too (Rust uses Java's own float maths on each platform).
+
+| Subsystem | Score | Main gaps |
+| --- | ---: | --- |
+| Window, input and game loop | 1 | None: the game loop, options, camera, auto-jump, toggle sprint/sneak, local input and the frame limiter match vanilla |
+| Assets and resources | 1 | None: item models match vanilla over 196,290 stacks and the client draws every item through them; the resource pack screen matches vanilla's drawing over 3,000 sessions of clicks, scrolling and searching, its incompatibility confirmation included |
+| Network protocol and multiplayer | 1 | None: joins vanilla servers; the dedicated server (`--dedicated`) matches vanilla's files, status ping, login, configuration, play, chunks, chat, recipes, advancements and command tree, a client built from vanilla's packet code joins it, Horizon joins a vanilla server, and LAN discovery matches over 462 cases (offline mode only) |
+| Chunk storage and palettes | 1 | None: client and saves share paletted containers, identical to vanilla over 266 scenarios |
+| Section meshing | 1 | None: 112 scenes and over a million quads identical to vanilla |
+| Rendering | 1 | None: entity models, block entity renderers (407 cases, End portals, gateways and the loom's banner preview included) and their animations (296 cases, End gateway beams included), the HUD overlays (2,200 states), the recipe book (600 states), the player list, subtitles and the world border match vanilla |
+| Lighting | 1 | None: saved and relit light matches vanilla, slabs and stairs included |
+| World generation | 1 | None: 2,352 whole chunks over 225 structure sites, in all three dimensions, identical to vanilla |
+| Region files and saves | 1 | None: saves round-trip with vanilla, and worlds from 1.8 to 26.2 upgrade as vanilla's DataFixers do, superflat worlds included; old options.txt and hotbar.nbt files are upgraded too |
+| Entities and physics | 1 | None: attributes, dimensions, death loot, spawn rules, natural spawning (15,500 cases), raids and patrols (1,900 cases), spawned mobs' gear, enchantments and state (`finalizeSpawn`, 24,000 cases) and mob AI (92 scenarios: villager breeding and gossip, the warden, ghastlings and copper golems included) match vanilla |
+| Interaction and inventory | 1 | None: menu clicks match over 8,000 click sequences, the loom and the crafter included; recipe book placement (6,000 cases), its buttons (1,200), the saved book (1,500) and the loom and crafter screens (1,600) match vanilla |
+| Menus, HUD and chat | 1 | None: every command runs as vanilla (758 commands over 39,685 parsed inputs), scoreboards and teams match (81,000 operations), the player list matches over 872,000 draw calls with heads drawn from players' skins (authlib's textures, SkinManager's lookup, legacy skin conversion), and the chat matches focused and scrolled; the resource pack screen (selection over 4,000 cases, drawing and its incompatibility confirmation over 3,000 sessions) and the chat input with its command suggestions, usage lines, Tab completion and history (3,000 sessions on vanilla's client command tree) match vanilla |
+| Audio | 1 | None: the sound engine, sound events, music, situational music, ambience and subtitles match vanilla |
+| Block behaviours and ticking | 1 | None: block updates, random ticks, redstone, dispensers (6,000 cases), crafters (4,000 crafts), block entity removal (containers spill, 4,000 cases), copper golem chest sorting and the sculk family (435 scenarios: shrieker warnings and warden summoning included) match vanilla |
+
+</details>
 
 - **The game:** singleplayer on saves in vanilla's format, with vanilla's world generation and rules.
 - **Horizon's extras:** graphics presets, distant terrain up to 1024 chunks, controller support, optional zoom, minimap and more — off by default where they would change the vanilla look.

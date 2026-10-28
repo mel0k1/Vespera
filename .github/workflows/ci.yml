@@ -153,7 +153,9 @@ jobs:
   # game directory in HORIZON_MINECRAFT_DIR and the pinned server jar in
   # HORIZON_SERVER_JAR. Start them by hand: gh workflow run checks --ref <branch>.
   vanilla-parity:
-    if: github.event_name == 'workflow_dispatch'
+    # Vespera: false, no self-hosted runner holds the game files here. Upstream's line was
+    # `github.event_name == 'workflow_dispatch'`.
+    if: false
     runs-on: [self-hosted, linux, horizon-game]
     steps:
       - uses: actions/checkout@v4
@@ -501,7 +503,8 @@ jobs:
           RUSTUP_TOOLCHAIN: stable
         run: python tools/test_float_log_parity.py
   jfr-analysis:
-    if: github.event_name == 'workflow_dispatch'
+    # Vespera: false, no self-hosted runner (see vanilla-parity above).
+    if: false
     runs-on: [self-hosted, linux, horizon-game]
     steps:
       - uses: actions/checkout@v4

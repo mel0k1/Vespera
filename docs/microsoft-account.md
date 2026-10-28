@@ -72,6 +72,23 @@ Decided 2026-10-27 (Ludovic, after a modder's suggestion): like other launchers,
 launcher starts the game only while an account in it owns Java Edition. Offline play stays
 possible; the launcher just doesn't offer it on its own.
 
+**Vespera relaxes this gate (the fork's default).** The game starts whatever the accounts say:
+an offline name, the game's own name, or a selected account the services refused. The gate's
+questions still run at every launch and their answers still drive everything else — a signed-in
+owner renews the selected account's session (online servers, the player's own name and skin),
+and `Launch.owner` still says who the launcher may download the game for. What changes:
+
+- `HORIZON_OWNER_GATE=1` (or `true`, `yes`, `on`) puts the strict gate back; anything else, unset
+  included, is the relaxed one (`account::strict_owner_gate`, `account::launch_with`).
+- With nothing that owns the game, Play goes ahead and says why it plays offline
+  (`account::PLAYING_OFFLINE_NO_OWNER`); the strict message remains for the strict gate.
+- Offline names play without any account behind them (`Accounts::play_as`).
+- The window's sign-in screen invites instead of gating: Play offline is the primary answer
+  (`launcher/src/owner_page.rs`).
+- The version download (below) fetches from Mojang's public URLs without an owner.
+
+Upstream's strict gate, as it stands:
+
 - **Play needs an owner.** Every Play (Home, instances and packs, `vespera-launcher play`,
   `modpack play`, the MCP's `play`) asks `account::launch` first. It asks the Minecraft services
   again for each account, the selected one first, until one owns the game: the token renewal
@@ -86,8 +103,9 @@ possible; the launcher just doesn't offer it on its own.
   (`owns`), so no plain file can say yes. With no network (or a sign-in that can't be renewed) the
   last answer stands: being offline never blocks a player who passed before, and the game starts
   without a session, offline. An answer of "doesn't own" (or no profile) blocks at once.
-- **Offline names play behind an owner.** They can be added and played only while an owning
-  account is signed in. Signing the last one out keeps them, and they play again once one is back.
+- **Offline names play behind an owner.** Under the strict gate they can be added and played only
+  while an owning account is signed in. Signing the last one out keeps them, and they play again
+  once one is back.
 - **Who isn't affected:** the game binary itself (`horizon-client`, `horizon-ctl launch`, the
   harnesses, CI), the dedicated server and `horizon-server`, the website. There is no bypass flag:
   the launcher's tests use accounts in a memory store (`MemoryStore`, and `HORIZON_NO_KEYCHAIN`
@@ -103,6 +121,11 @@ libraries, the asset index and the assets, each checked against the size and sha
 They go to `minecraft/` in the launcher's data folder, and the preparation runs as usual. The
 download can be cancelled and goes on where it stopped. CI, agents, harnesses and the repo never
 download or keep Mojang's files.
+
+Vespera: Mojang's version files and archives sit on public URLs (the official launcher fetches
+them without signing in), so the download runs whatever the accounts say (`download_for_owner`):
+an owner in the launcher is named in the log when there is one. Under the strict gate the owner
+is required again, as above.
 
 Refresh: the Minecraft token is renewed from the Microsoft refresh token (steps 2-5 with
 `grant_type=refresh_token`) when it has less than an hour left, before every launch; steps 6-7 run

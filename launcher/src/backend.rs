@@ -1205,9 +1205,11 @@ fn preparer_binary(dir: &Path) -> Option<PathBuf> {
     binary.is_file().then_some(binary)
 }
 
-/// Downloads the pinned version from Mojang into `dir` when an account in the launcher owns
-/// Minecraft (asked again now), else says what signing in would do, as the last line of the
-/// not-found error.
+/// Downloads the pinned version from Mojang into `dir`. Mojang's version files and archives sit
+/// on public URLs (the official launcher fetches them without signing in), so Vespera downloads
+/// them whatever the accounts say, as launchers with offline accounts do. With an owner in the
+/// launcher the log names it; `HORIZON_OWNER_GATE=1` (the strict gate) downloads for an owner
+/// only, and says what signing in would do, as the last line of the not-found error.
 fn download_for_owner(
     pins: &sources::Pins,
     dir: &Path,
@@ -1223,38 +1225,43 @@ fn download_for_owner(
         &mut accounts,
     );
     let _ = accounts.save();
-    match pass {
-        Ok(account::Launch {
-            owner: Some((owner, _)),
-            ..
-        }) => {
+    // The relaxed gate (Vespera's default) never refuses; the strict one does when no account
+    // owns the game.
+    let Some(pass) = pass.ok() else {
+        return Err(if accounts.accounts.is_empty() {
+            format!(
+                "\n  • Or sign in with the Microsoft account that owns Minecraft: Java Edition, and Vespera downloads {v} from Mojang itself."
+            )
+        } else {
+            "\n  • No signed-in account owns Minecraft: Java Edition, so Vespera can't download it."
+                .into()
+        })
+    };
+    match pass.owner {
+        Some((owner, _)) => {
             let name = owner.name;
             log(format!(
                 "{name} owns Minecraft: downloading {v} from Mojang"
             ));
-            let os = match sources::Os::current() {
-                sources::Os::Linux => "linux",
-                sources::Os::MacOs => "osx",
-                sources::Os::Windows => "windows",
-            };
-            mojang::download(pins, dir, os, 8, fetch, &mojang::CANCEL, log).map_err(|e| {
-                format!("\n  • Vespera tried to download {v} from Mojang for {name}, but: {e}")
-            })
         }
-        // An owner by its last answer, who can't be asked now.
-        Ok(pass) => Err(format!(
-            "\n  • Downloading {v} from Mojang needs your Microsoft account, which could not be \
-             checked: {}",
-            pass.offline.unwrap_or_default()
-        )),
-        Err(_) if !accounts.accounts.is_empty() => Err(
-            "\n  • No signed-in account owns Minecraft: Java Edition, so Vespera can't download it."
-                .into(),
-        ),
-        Err(_) => Err(format!(
-            "\n  • Or sign in with the Microsoft account that owns Minecraft: Java Edition, and Vespera downloads {v} from Mojang itself."
-        )),
+        // The strict gate, and an owner by its last answer who can't be asked now.
+        None if account::strict_owner_gate() => {
+            return Err(format!(
+                "\n  • Downloading {v} from Mojang needs your Microsoft account, which could not be \
+                 checked: {}",
+                pass.offline.unwrap_or_default()
+            ))
+        }
+        None => log(format!("Downloading {v} from Mojang")),
     }
+    let os = match sources::Os::current() {
+        sources::Os::Linux => "linux",
+        sources::Os::MacOs => "osx",
+        sources::Os::Windows => "windows",
+    };
+    mojang::download(pins, dir, os, 8, fetch, &mojang::CANCEL, log).map_err(|e| {
+        format!("\n  • Vespera tried to download {v} from Mojang, but: {e}")
+    })
 }
 
 /// The Java home for this version: a runtime for precompiled exporters, a JDK for older
@@ -1925,15 +1932,15 @@ pub fn need_prepared(tag: &str) -> Result<(), String> {
 pub fn client(tag: &str) -> Result<Command, String> {
     let (session, offline) = account::session_for_game(&game_home())
         .map_err(|refused| format!("{refused} Sign in with `vespera-launcher account sign-in`."))?;
+    if let Some(e) = offline {
+        eprintln!("Playing offline: {e}");
+    }
     need_prepared(tag)?;
     complete_assets(tag);
     crate::browser::horizon::before_play(&game_home());
     let mut cmd = client_command(tag);
     if let Some(file) = session {
         cmd.arg("--session-file").arg(file);
-    }
-    if let Some(e) = offline {
-        eprintln!("Playing offline: {e}");
     }
     append_game_args(&mut cmd);
     Ok(cmd)
@@ -3973,8 +3980,13 @@ mod tests {
         fs::create_dir_all(&dir).unwrap();
         let exe = dir.join("vespera-launcher");
         fs::write(&exe, "old").unwrap();
-        // Another update swaps the file under the running launcher.
+        // Another update swaps the file under the running launcher (0644 whatever the umask).
         fs::write(dir.join("other"), "other update").unwrap();
+        fs::set_permissions(
+            dir.join("other"),
+            fs::Permissions::from_mode(0o644),
+        )
+        .unwrap();
         fs::rename(dir.join("other"), &exe).unwrap();
         fs::write(dir.join("new"), "new").unwrap();
         replace_binary(&dir.join("new"), &exe).unwrap();

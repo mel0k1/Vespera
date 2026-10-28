@@ -1,5 +1,7 @@
-//! The owner gate from the outside: with no account that owns Minecraft: Java Edition in the
-//! launcher, neither `vespera-launcher play` nor the MCP server's play starts the game.
+//! The owner gate from the outside, strict (`HORIZON_OWNER_GATE=1`, upstream's): with no account
+//! that owns Minecraft: Java Edition in the launcher, neither `vespera-launcher play` nor the MCP
+//! server's play starts the game. Vespera's default (relaxed) gate lets the game start, offline;
+//! a third test holds that open.
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
@@ -35,7 +37,9 @@ fn launcher(root: &Path, args: &[&str]) -> Command {
         .env("HORIZON_TELEMETRY_URL", "off")
         // Memory only: the test never reads the player's keychain.
         .env("HORIZON_NO_KEYCHAIN", "1")
-        .env("HORIZON_MSA_CLIENT_ID", "test-client");
+        .env("HORIZON_MSA_CLIENT_ID", "test-client")
+        // Upstream's strict gate: play needs an account that owns the game.
+        .env("HORIZON_OWNER_GATE", "1");
     cmd
 }
 
@@ -55,6 +59,23 @@ fn the_cli_refuses_to_play_without_an_owner() {
     assert!(!root.join("game/sessions").exists());
     let accounts = std::fs::read_to_string(root.join("launcher/accounts.json")).unwrap();
     assert!(accounts.contains("Builder_1"), "{accounts}");
+    let _ = std::fs::remove_dir_all(&root);
+}
+
+#[test]
+fn the_relaxed_gate_plays_offline_without_an_owner() {
+    let root = home("relaxed");
+    let out = launcher(&root, &["play"])
+        .env_remove("HORIZON_OWNER_GATE")
+        .output()
+        .unwrap();
+    let said = text(&out);
+    // The gate lets it through: the game would start, and only the missing preparation stops it.
+    assert!(said.contains("not prepared yet"), "{said}");
+    assert!(!said.contains(REFUSED), "{said}");
+    assert!(said.contains("Playing offline"), "{said}");
+    // No session was written: the game plays under its offline name.
+    assert!(!root.join("game/sessions").exists());
     let _ = std::fs::remove_dir_all(&root);
 }
 

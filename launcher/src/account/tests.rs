@@ -332,19 +332,22 @@ fn an_owner_plays_with_a_session() {
 }
 
 #[test]
-fn a_no_from_the_services_blocks_at_once() {
+fn a_no_from_the_services_plays_offline_unless_the_gate_is_strict() {
     let (_, ep) = mock(|m| m.owns_game = false);
     let store = MemoryStore::default();
     let mut accounts = signed_in(&store, &secrets("mc-token", true));
     assert!(accounts.has_owner(&store));
-    assert_eq!(
-        launch(&ep, Some("test-client"), &store, &mut accounts).unwrap_err(),
-        NoOwner
-    );
+    // Vespera's relaxed gate: the game plays, offline, and says why.
+    let pass = launch_with(&ep, Some("test-client"), &store, &mut accounts, false).unwrap();
+    assert!(pass.session.is_none() && pass.owner.is_none());
+    assert_eq!(pass.offline.as_deref(), Some(DOES_NOT_OWN));
     // The answer is kept beside the tokens: offline now, it still says no.
     assert!(!kept(&store).owns && !accounts.has_owner(&store));
+    let pass = launch_with(&offline(), Some("test-client"), &store, &mut accounts, false).unwrap();
+    assert!(pass.session.is_none() && pass.owner.is_none());
+    // The strict gate refuses, with the message the player sees.
     assert_eq!(
-        launch(&offline(), Some("test-client"), &store, &mut accounts).unwrap_err(),
+        launch_with(&ep, Some("test-client"), &store, &mut accounts, true).unwrap_err(),
         NoOwner
     );
     assert_eq!(
@@ -357,7 +360,7 @@ fn a_no_from_the_services_blocks_at_once() {
 fn no_network_never_blocks_a_past_owner() {
     let store = MemoryStore::default();
     let mut accounts = signed_in(&store, &secrets("mc-token", true));
-    let pass = launch(&offline(), Some("test-client"), &store, &mut accounts).unwrap();
+    let pass = launch_with(&offline(), Some("test-client"), &store, &mut accounts, false).unwrap();
     // Plays, offline, and says why.
     assert!(pass.session.is_none() && pass.owner.is_none());
     assert!(pass.offline.unwrap().contains("Could not reach"));
@@ -367,11 +370,13 @@ fn no_network_never_blocks_a_past_owner() {
         ..secrets("mc-token", true)
     };
     let mut accounts = signed_in(&store, &stale);
-    assert!(launch(&offline(), Some("test-client"), &store, &mut accounts).is_ok());
-    assert!(launch(&offline(), None, &store, &mut accounts).is_ok());
-    // An account that never passed doesn't pass offline.
+    assert!(launch_with(&offline(), Some("test-client"), &store, &mut accounts, false).is_ok());
+    assert!(launch_with(&offline(), None, &store, &mut accounts, false).is_ok());
+    // An account that never passed doesn't pass the strict gate offline; the relaxed one plays
+    // the game all the same.
     let mut accounts = signed_in(&store, &secrets("mc-token", false));
-    assert!(launch(&offline(), Some("test-client"), &store, &mut accounts).is_err());
+    assert!(launch_with(&offline(), Some("test-client"), &store, &mut accounts, true).is_err());
+    assert!(launch_with(&offline(), Some("test-client"), &store, &mut accounts, false).is_ok());
 }
 
 #[test]
@@ -393,7 +398,7 @@ fn any_owner_opens_the_gate_and_the_one_who_plays_brings_the_session() {
         cape: None,
     });
     accounts.selected = Some("other".into());
-    let pass = launch(&ep, Some("test-client"), &store, &mut accounts).unwrap();
+    let pass = launch_with(&ep, Some("test-client"), &store, &mut accounts, false).unwrap();
     assert!(pass.session.is_none());
     assert!(pass
         .offline
@@ -403,34 +408,49 @@ fn any_owner_opens_the_gate_and_the_one_who_plays_brings_the_session() {
     // An offline name plays: Notch is asked, and no session goes to the game.
     accounts.selected = None;
     m.lock().unwrap().log.clear();
-    let pass = launch(&ep, Some("test-client"), &store, &mut accounts).unwrap();
+    let pass = launch_with(&ep, Some("test-client"), &store, &mut accounts, false).unwrap();
     assert!(pass.session.is_none() && pass.offline.is_none());
     assert_eq!(m.lock().unwrap().log.len(), 2);
-    // No account at all.
-    assert!(launch(&ep, Some("test-client"), &store, &mut Accounts::default()).is_err());
+    // No account at all: the relaxed gate plays offline and says so; the strict one refuses.
+    let mut none = Accounts::default();
+    let pass = launch_with(&ep, Some("test-client"), &store, &mut none, false).unwrap();
+    assert!(pass.session.is_none() && pass.owner.is_none());
+    assert_eq!(pass.offline.as_deref(), Some(PLAYING_OFFLINE_NO_OWNER));
+    assert!(launch_with(&ep, Some("test-client"), &store, &mut none, true).is_err());
 }
 
 #[test]
-fn offline_names_play_only_beside_an_owner() {
+fn offline_names_play_with_or_without_an_owner() {
     let store = MemoryStore::default();
+    // Vespera's relaxed gate: an offline name needs no account at all.
     let mut accounts = Accounts::default();
-    let refused = accounts.play_as(&store, Player::Offline("Builder_1".into()));
+    accounts
+        .play_as_with(&store, Player::Offline("Builder_1".into()), false)
+        .unwrap();
+    assert_eq!(accounts.player(), Player::Offline("Builder_1".into()));
+    // The strict gate (upstream's) wants an account that owns the game behind the name.
+    let mut accounts = Accounts::default();
+    let refused = accounts.play_as_with(&store, Player::Offline("Builder_1".into()), true);
     assert_eq!(refused.unwrap_err(), OFFLINE_NEEDS_OWNER);
     assert!(accounts.offline.is_empty());
     let mut accounts = signed_in(&store, &secrets("mc-token", true));
     accounts
-        .play_as(&store, Player::Offline("Builder_1".into()))
+        .play_as_with(&store, Player::Offline("Builder_1".into()), true)
         .unwrap();
-    // Signing the last owner out keeps the name, which no longer plays.
+    // Signing the last owner out keeps the name, which no longer plays under the strict gate.
     accounts.remove(&store, UUID).unwrap();
     assert_eq!(accounts.offline, ["Builder_1"]);
     assert_eq!(accounts.player(), Player::Offline("Builder_1".into()));
     assert!(!accounts.has_owner(&store));
     let (_, ep) = mock(|_| {});
-    assert!(launch(&ep, Some("test-client"), &store, &mut accounts).is_err());
+    assert!(launch_with(&ep, Some("test-client"), &store, &mut accounts, true).is_err());
+    assert!(launch_with(&ep, Some("test-client"), &store, &mut accounts, false).is_ok());
     assert!(accounts
-        .play_as(&store, Player::Offline("Builder_2".into()))
+        .play_as_with(&store, Player::Offline("Builder_2".into()), true)
         .is_err());
+    accounts
+        .play_as_with(&store, Player::Offline("Builder_2".into()), false)
+        .unwrap();
 }
 
 #[test]

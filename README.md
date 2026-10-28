@@ -31,19 +31,19 @@
 
 Vespera is installed through **the Vespera launcher**. Grab a build from [the launcher releases](https://github.com/mel0k1/Vespera/releases?q=launcher&expanded=true) for Linux x86-64, macOS on Apple Silicon or Windows x64. The launcher installs and updates the game, prepares its files from your own copy of Minecraft, and updates itself.
 
-**You need** a Microsoft account that owns Minecraft: Java Edition (the launcher signs in with it, as other launchers do); Minecraft: Java Edition 26.3, played once (the official launcher, Prism, MultiMC and other launchers all work); a Java 25 runtime, for the one-time preparation; and a GPU with Vulkan on Linux and Windows, or any Apple Silicon Mac.
+**You need** Minecraft: Java Edition 26.3, played once (the official launcher, Prism, MultiMC and other launchers all work); a Java 25 runtime, for the one-time preparation; and a GPU with Vulkan on Linux and Windows, or any Apple Silicon Mac. Play offline with just a name, no account — like launchers with offline accounts. A Microsoft account that owns Minecraft: Java Edition is optional: it plays online-mode servers with your name and skin, and lets Vespera download the game from Mojang on its own.
 
 ## The launcher
 
 Built with [GPUI](https://www.gpui.rs), Zed's UI framework — native, fast, dark by default, with Vespera's twilight violet.
 
-- **Play** — prepares the game from your own Minecraft install, or downloads the pinned version straight from Mojang's own servers (piston-meta, with every file's size and sha1 checked) for an account that owns the game. Then starts the client.
+- **Play** — prepares the game from your own Minecraft install, or downloads the pinned version straight from Mojang's own servers (piston-meta, with every file's size and sha1 checked). Then starts the client.
 - **Versions** — lists the published releases of this repository, installs the build for this platform into its own folder, and removes it again. Signed checksums are verified before anything runs.
 - **Mods** — search Modrinth for resource packs and modpacks, each marked *Works*, *Partly* or *Doesn't run*; Java mod jars are never offered. Installs only after a SHA-512 match, with Update all and Remove.
 - **Modpacks** — import a Modrinth `.mrpack`, a CurseForge zip or a Prism/MultiMC instance folder and see a per-mod coverage report. **Port** carries content mods over the player's own way — nothing is uploaded or shared.
 - **Servers** — host a world for friends with buttons: create, start, stop, back up, update, a console, players, settings and **friends over the internet** through Tailscale. Everything goes through `horizon-server` itself.
 - **Instances** — separate game folders with their own worlds, options and packs, grouped in the sidebar, with per-instance launch options, play time and export to `.mrpack` or a zip. Drop a file anywhere in the window to import it.
-- **Accounts** — Microsoft sign-in, secrets kept in the system keychain.
+- **Accounts** — Microsoft sign-in for online servers, secrets kept in the system keychain; offline names play without one.
 - **Agents** — a built-in MCP server and CLI (`vespera-launcher mcp`, `vespera-launcher …`) so AI agents and scripts can drive the launcher, and `horizon-ctl` plays the game itself.
 - **Self-update** — the launcher updates itself from this repository, through signed release checksums.
 

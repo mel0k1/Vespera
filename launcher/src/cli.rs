@@ -99,9 +99,8 @@ enum AccountCmd {
     },
     /// Play as this account, or as one of your offline names
     Select { who: String },
-    /// Play offline (LAN, offline-mode servers) beside a signed-in account that owns the game:
-    /// as NAME (kept to switch back to; 3 to 16 letters, digits or _), or as the name the game
-    /// made up
+    /// Play offline (LAN, offline-mode servers), no account needed: as NAME (kept to switch
+    /// back to; 3 to 16 letters, digits or _), or as the name the game made up
     Offline { name: Option<String> },
     /// Forget one of your offline names
     ForgetOffline { name: String },
@@ -1445,8 +1444,8 @@ fn account_command(action: AccountCmd, as_json: bool) -> Result<(), String> {
                 }));
             } else if accounts.accounts.is_empty() && accounts.offline.is_empty() {
                 println!(
-                    "No Microsoft account signed in. Play needs one that owns Minecraft: Java \
-                     Edition: vespera-launcher account sign-in"
+                    "No Microsoft account signed in. The game plays offline; \
+                     `vespera-launcher account sign-in` adds one for online servers"
                 );
             } else {
                 for a in &accounts.accounts {
@@ -1467,7 +1466,14 @@ fn account_command(action: AccountCmd, as_json: bool) -> Result<(), String> {
                     );
                 }
                 if !accounts.has_owner(account::store()) {
-                    println!("{}.", account::NEEDS_OWNER);
+                    if account::strict_owner_gate() {
+                        println!("{}.", account::NEEDS_OWNER);
+                    } else {
+                        println!(
+                            "Playing offline: `vespera-launcher account sign-in` adds a \
+                             Microsoft account for online servers."
+                        );
+                    }
                 }
             }
         }

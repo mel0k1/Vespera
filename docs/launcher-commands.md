@@ -139,7 +139,7 @@ MCP: `account_select`.
 
 ## `vespera-launcher account offline`
 
-Play offline (LAN, offline-mode servers) beside a signed-in account that owns the game: as NAME (kept to switch back to; 3 to 16 letters, digits or _), or as the name the game made up.
+Play offline (LAN, offline-mode servers), no account needed: as NAME (kept to switch back to; 3 to 16 letters, digits or _), or as the name the game made up.
 
     vespera-launcher account offline [NAME]
 

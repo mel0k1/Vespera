@@ -2315,8 +2315,8 @@ impl Launcher {
                     .child(play),
             );
 
-        // Not prepared: an owner can have Horizon download Minecraft from Mojang; without an
-        // owner there is nothing to play, so signing in comes first.
+        // Not prepared: Vespera downloads Minecraft from Mojang (its files are public); an
+        // account only adds the player's own name and skin for online servers.
         let first = (!prepared && !self.preparing)
             .then_some(self.owner)
             .flatten();
@@ -2327,7 +2327,7 @@ impl Launcher {
                 &[("version", &version)],
             ),
             Some(false) => trf(
-                "Not prepared. Sign in with the Microsoft account that owns Minecraft {version} first.",
+                "Not prepared. Vespera can download Minecraft {version} from Mojang, or use your own install.",
                 &[("version", &version)],
             ),
             None => backend::resources_summary(prepared, !silent, &version),
@@ -2427,18 +2427,21 @@ impl Launcher {
         {
             rows = rows.child(self.join_friend_row(prepared && !running, cx));
             // The top bar shows who plays; a row only when there is something to do about it:
-            // no account that owns the game (Play needs one), or offline.
+            // no account that owns the game (online play wants one), or offline.
             if self.owner == Some(false) {
                 rows = rows.child(index_row(
                     5,
                     tr("Microsoft account"),
                     Some(
                         div()
-                            .child(format!("{}.", tr(account::NEEDS_OWNER)))
+                            .child(tr(
+                                "Sign in to play online servers with your name and skin. Offline \
+                                 play needs no account.",
+                            ))
                             .into_any_element(),
                     ),
                     Some(
-                        button("gate-sign-in", "Sign in", Kind::Primary, &t)
+                        button("gate-sign-in", "Sign in", Kind::Secondary, &t)
                             .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
                                 this.sign_in_to_play();
                                 cx.notify();
@@ -3477,7 +3480,8 @@ impl Launcher {
             Some(SignInState::Done(Ok(a))) => div().child(format!("Signed in as {}.", a.name)),
             Some(SignInState::Done(Err(e))) => div().text_color(t.danger).child(e.clone()),
             None if self.accounts.accounts.is_empty() => div().child(tr(
-                "Vespera needs a Microsoft account that owns Minecraft: Java Edition, like other launchers. It also plays online servers with your name and skin.",
+                "A Microsoft account that owns Minecraft: Java Edition plays online servers with \
+                 your name and skin. The game plays offline without one.",
             )),
             None => div().child(tr("Add another account.")),
         };

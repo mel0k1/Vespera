@@ -9,6 +9,10 @@
 //! Minecraft: Java Edition, as other launchers do. Offline names play behind such an account.
 //! The game binary itself, its harnesses and the servers don't go through the launcher's gate.
 //!
+//! Vespera relaxes the gate: by default the game also starts with no account that owns the game
+//! (an offline name, the game's own name, or a selected account the services refused), the way
+//! launchers with offline accounts do. `HORIZON_OWNER_GATE=1` puts the upstream gate back.
+//!
 //! The Azure app (client ID) is Horizon's own and is configuration: `HORIZON_MSA_CLIENT_ID` at
 //! build time, or at run time to override it. Without one, sign-in says it is not configured.
 use serde_json::{json, Value};
@@ -25,6 +29,26 @@ pub const NOT_CONFIGURED: &str =
 /// What every Play says while no account in the launcher owns the game.
 pub const NEEDS_OWNER: &str =
     "Sign in with a Microsoft account that owns Minecraft: Java Edition to play";
+/// Why the game plays without a session while no account in the launcher owns the game (Vespera's
+/// relaxed gate: it plays all the same).
+pub const PLAYING_OFFLINE_NO_OWNER: &str =
+    "no Microsoft account that owns Minecraft: Java Edition is signed in";
+
+/// Whether the owner gate is strict, upstream's: only a signed-in account that owns Minecraft:
+/// Java Edition plays, offline names included. Vespera's default is the relaxed gate: the game
+/// starts whatever the accounts say, and a Microsoft account is only needed to play online
+/// servers. `HORIZON_OWNER_GATE=1` (or `true`, `yes`) asks for the strict one.
+pub fn strict_owner_gate() -> bool {
+    static STRICT: OnceLock<bool> = OnceLock::new();
+    *STRICT.get_or_init(|| {
+        std::env::var("HORIZON_OWNER_GATE")
+            .ok()
+            .map(|v| {
+                matches!(v.trim().to_ascii_lowercase().as_str(), "1" | "true" | "yes" | "on")
+            })
+            .unwrap_or(false)
+    })
+}
 const DOES_NOT_OWN: &str = "This account doesn't own Minecraft: Java Edition.";
 const NO_PROFILE: &str =
     "This account has no Minecraft profile yet. Create one at minecraft.net, then sign in again.";
@@ -785,7 +809,8 @@ pub enum Player {
 }
 
 const OFFLINE_NEEDS_OWNER: &str =
-    "Offline names need a Microsoft account that owns Minecraft: Java Edition in the launcher.";
+    "Offline names need a Microsoft account that owns Minecraft: Java Edition in the launcher \
+     (or set HORIZON_OWNER_GATE=0 for offline play).";
 
 /// The secrets an account keeps in `store`, if it still has them there.
 fn secrets_in(store: &dyn SecretStore, uuid: &str) -> Option<Secrets> {
@@ -866,9 +891,14 @@ impl Accounts {
         }
     }
 
-    /// Plays as `who`: an account, an offline name (kept, only beside an account that owns the
-    /// game), or the game's own name.
+    /// Plays as `who`: an account, an offline name (kept; only beside an account that owns the
+    /// game under the strict gate), or the game's own name.
     pub fn play_as(&mut self, store: &dyn SecretStore, who: Player) -> Result<(), String> {
+        self.play_as_with(store, who, strict_owner_gate())
+    }
+
+    /// [`Self::play_as`] with the gate's strictness spelled out (tests).
+    pub fn play_as_with(&mut self, store: &dyn SecretStore, who: Player, strict: bool) -> Result<(), String> {
         match who {
             Player::Microsoft(uuid) => {
                 if !self.accounts.iter().any(|a| a.uuid == uuid) {
@@ -877,7 +907,7 @@ impl Accounts {
                 self.selected = Some(uuid);
             }
             Player::Offline(name) => {
-                if !self.has_owner(store) {
+                if strict && !self.has_owner(store) {
                     return Err(OFFLINE_NEEDS_OWNER.into());
                 }
                 let name = self.add_offline(&name)?;
@@ -1001,6 +1031,20 @@ pub fn launch(
     store: &dyn SecretStore,
     accounts: &mut Accounts,
 ) -> Result<Launch, NoOwner> {
+    launch_with(ep, client_id, store, accounts, strict_owner_gate())
+}
+
+/// [`launch`] with the gate's strictness spelled out (tests). The strict gate refuses to start
+/// the game while no account owns it. Vespera's relaxed one never refuses: the answers still come
+/// back in `Launch` — the selected account's session when it renewed, `owner` when some account
+/// owns the game — and `offline` says why this launch plays without a session.
+pub fn launch_with(
+    ep: &Endpoints,
+    client_id: Option<&str>,
+    store: &dyn SecretStore,
+    accounts: &mut Accounts,
+    strict: bool,
+) -> Result<Launch, NoOwner> {
     let selected = accounts.selected.clone();
     let mut order = accounts.accounts.clone();
     order.sort_by_key(|a| Some(&a.uuid) != selected.as_ref());
@@ -1046,9 +1090,18 @@ pub fn launch(
         }
     }
     if owned {
-        Ok(pass)
-    } else {
-        Err(NoOwner)
+        return Ok(pass);
+    }
+    match strict {
+        true => Err(NoOwner),
+        // Vespera: the gate opens without an owner; the game plays offline, with the game's own
+        // name or the selected offline name (`--name`).
+        false => {
+            if pass.offline.is_none() {
+                pass.offline = Some(PLAYING_OFFLINE_NO_OWNER.into());
+            }
+            Ok(pass)
+        }
     }
 }
 
@@ -1144,8 +1197,8 @@ impl SignIn {
     }
 }
 
-/// The owner gate for the game about to start, then the selected account's session in a file
-/// for it: the file (none: offline) and why the account plays offline this time, if it does.
+/// The gate for the game about to start, then the selected account's session in a file for it:
+/// the file (none: offline) and why the account plays offline this time, if it does.
 pub fn session_for_game(game_home: &Path) -> Result<(Option<PathBuf>, Option<String>), NoOwner> {
     let mut accounts = Accounts::load();
     let pass = launch(

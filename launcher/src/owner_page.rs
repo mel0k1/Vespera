@@ -1,12 +1,12 @@
-//! The owner gate in the window (`vespera_launcher::account::launch`): the screen that asks for a
-//! Microsoft account that owns Minecraft: Java Edition. It covers the launcher once for players
-//! without one (those who played offline before the gate), and again whenever Play is refused.
-//! The sign-in runs on it, code and all.
+//! The sign-in screen (once the first screen players see when no account is signed in): Vespera
+//! plays without an account, so this screen invites instead of gates. It says what a Microsoft
+//! account that owns Minecraft: Java Edition adds (online servers, the player's own name and
+//! skin), starts the sign-in when asked, and offers offline play right away.
 use super::*;
 
 impl Launcher {
-    /// Whether the screen covers the window: no owner, and either Play was refused or the player
-    /// hasn't read it yet. The data question comes first.
+    /// Whether the screen covers the window: no owner yet, and either the player opened it or
+    /// hasn't read it once. The data question comes first.
     pub(crate) fn asking_owner(&self) -> bool {
         self.owner == Some(false)
             && (self.owner_screen_open || !self.settings.owner_notice_seen)
@@ -42,13 +42,12 @@ impl Launcher {
             .gap(px(12.))
             .p(px(28.))
             .child(caps(tr("Microsoft account")).text_color(t.muted))
-            .child(
-                text(theme::HEADING)
-                    .text_color(t.ink)
-                    .child(format!("{}.", tr(account::NEEDS_OWNER))),
-            )
+            .child(text(theme::HEADING).text_color(t.ink).child(tr(
+                "Play offline right away, or sign in to play online servers.",
+            )))
             .child(text(theme::UI).text_color(t.muted).child(tr(
-                "Vespera needs a Microsoft account that owns Minecraft: Java Edition, like other launchers.",
+                "A Microsoft account that owns Minecraft: Java Edition plays online servers with \
+                 your name and skin. Offline play needs no account.",
             )))
             .child(text(theme::UI).text_color(t.muted).child(tr(
                 "Your worlds, offline names and settings stay where they are.",
@@ -89,9 +88,10 @@ impl Launcher {
             .px(px(28.))
             .pb(px(28.))
             .child(
-                button("owner-later", "Not now", Kind::Secondary, &t).on_click(cx.listener(
+                button("owner-offline", "Play offline", Kind::Primary, &t).on_click(cx.listener(
                     |this, _: &ClickEvent, _, cx| {
                         this.close_owner_screen();
+                        this.play();
                         cx.notify();
                     },
                 )),
@@ -118,7 +118,7 @@ impl Launcher {
             Some(SignInState::Starting) => answers,
             _ if !configured => answers,
             _ => answers.child(
-                button("owner-sign-in", "Sign in", Kind::Primary, &t).on_click(cx.listener(
+                button("owner-sign-in", "Sign in", Kind::Secondary, &t).on_click(cx.listener(
                     |this, _: &ClickEvent, _, cx| {
                         this.sign_in_to_play();
                         cx.notify();

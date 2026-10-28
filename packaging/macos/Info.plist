@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- Horizon.app's Info.plist; package.sh fills in @VERSION@ from launcher/Cargo.toml. -->
+<!-- Vespera.app's Info.plist; package.sh fills in @VERSION@ from launcher/Cargo.toml. -->
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Horizon</string>
+	<string>Vespera</string>
 	<key>CFBundleExecutable</key>
-	<string>horizon-launcher</string>
+	<string>vespera-launcher</string>
 	<key>CFBundleIconFile</key>
-	<string>horizon</string>
+	<string>vespera</string>
 	<key>CFBundleIdentifier</key>
-	<string>dev.horizon.launcher</string>
+	<string>dev.vespera.launcher</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Horizon</string>
+	<string>Vespera</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

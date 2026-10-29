@@ -11,9 +11,6 @@ use std::time::Duration;
 
 pub const FONT: &str = "Geist";
 pub const MONO: &str = "Geist Mono";
-/// The launcher's and the website's display face (headings, navigation, buttons, badges only):
-/// Pixelify Sans, bundled under the SIL Open Font License (`fonts/OFL-PixelifySans.txt`).
-pub const PIXEL: &str = "Pixelify Sans";
 
 /// The bundled font files.
 pub mod fonts {
@@ -21,19 +18,16 @@ pub mod fonts {
     pub const GEIST_MEDIUM: &[u8] = include_bytes!("../fonts/Geist-Medium.ttf");
     pub const GEIST_SEMIBOLD: &[u8] = include_bytes!("../fonts/Geist-SemiBold.ttf");
     pub const GEIST_MONO: &[u8] = include_bytes!("../fonts/GeistMono-Regular.ttf");
-    pub const PIXEL_MEDIUM: &[u8] = include_bytes!("../fonts/PixelifySans-Medium.ttf");
-    pub const PIXEL_SEMIBOLD: &[u8] = include_bytes!("../fonts/PixelifySans-SemiBold.ttf");
-    pub const PIXEL_BOLD: &[u8] = include_bytes!("../fonts/PixelifySans-Bold.ttf");
 }
 
-/// The launcher's pixel icons: Pixelarticons (MIT, `icons/pixel/LICENSE-pixelarticons.txt`), 24
-/// unit SVGs filled with `currentColor`, by name (`"home"`, `"play"`…).
+/// The launcher's icons: Lucide (ISC, `icons/lucide/LICENSE-lucide.txt`), 24 unit stroke SVGs
+/// drawn with `currentColor`, by name (`"home"`, `"play"`…).
 pub mod icons {
     macro_rules! icons {
         ($($name:literal),* $(,)?) => {
             /// Every icon, `(name, svg)`.
             pub const ALL: &[(&str, &[u8])] = &[
-                $(($name, include_bytes!(concat!("../icons/pixel/", $name, ".svg")))),*
+                $(($name, include_bytes!(concat!("../icons/lucide/", $name, ".svg")))),*
             ];
         };
     }
@@ -67,7 +61,6 @@ pub mod icons {
         "search",
         "server",
         "sliders",
-        // Not Pixelarticons': drawn for Horizon's ratings, in the same 2-unit grid.
         "star",
         "terminal",
         "trash",
@@ -75,13 +68,20 @@ pub mod icons {
         "zap",
     );
 
-    /// An icon's SVG by name.
+    /// An icon's SVG by name (Vespera's mark included).
     pub fn get(name: &str) -> Option<&'static [u8]> {
+        if name == MARK.0 {
+            return Some(MARK.1);
+        }
         ALL.iter().find(|(n, _)| *n == name).map(|(_, svg)| *svg)
     }
+
+    /// Vespera's evening star, the mark beside the wordmark (ours, not Lucide's): tinted
+    /// like the icons.
+    pub const MARK: (&str, &[u8]) = ("vespera-star", include_bytes!("../icons/vespera-star.svg"));
 }
 
-/// Horizon's icon at 64 px (PNG), for window title bars and task bars at run time. Rendered from
+/// Vespera's icon at 64 px (PNG), for window title bars and task bars at run time. Rendered from
 /// `docs/media/brand/icon.svg` by `cargo run -p xtask -- icons`.
 pub const ICON_PNG: &[u8] = include_bytes!("../icons/vespera-64.png");
 
@@ -555,7 +555,7 @@ pub fn css() -> String {
     colors(&mut s, &BLOCKS_LIGHT);
     let _ = writeln!(
         s,
-        "  --font: \"{FONT}\", ui-sans-serif, system-ui, sans-serif;\n  --mono: \"{MONO}\", ui-monospace, monospace;\n  --pixel: \"{PIXEL}\", \"{FONT}\", ui-sans-serif, sans-serif;"
+        "  --font: \"{FONT}\", ui-sans-serif, system-ui, sans-serif;\n  --mono: \"{MONO}\", ui-monospace, monospace;\n  --display: \"{FONT}\", ui-sans-serif, system-ui, sans-serif;"
     );
     for (name, v) in [
         ("block-outline", BLOCK_OUTLINE),
@@ -718,13 +718,17 @@ mod tests {
     }
 
     #[test]
-    fn every_icon_is_a_pixel_svg() {
+    fn every_icon_is_an_svg() {
         for (name, svg) in icons::ALL {
             let svg = std::str::from_utf8(svg).unwrap();
             assert!(svg.contains("viewBox=\"0 0 24 24\""), "{name}");
             assert!(svg.contains("currentColor"), "{name}");
         }
         assert!(icons::get("play").is_some());
+        let mark = std::str::from_utf8(icons::MARK.1).unwrap();
+        assert!(mark.contains("viewBox=\"0 0 16 16\""), "the mark");
+        assert!(mark.contains("currentColor"), "the mark");
+        assert!(icons::get("vespera-star").is_some());
     }
 
     /// The game's menus over the brightest backdrop: the page colour veiled over it, and a

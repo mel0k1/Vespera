@@ -31,7 +31,7 @@
   color-scheme: light;
   --font: "Geist", ui-sans-serif, system-ui, sans-serif;
   --mono: "Geist Mono", ui-monospace, monospace;
-  --pixel: "Pixelify Sans", "Geist", ui-sans-serif, sans-serif;
+  --display: "Geist", ui-sans-serif, system-ui, sans-serif;
   --block-outline: 2px;
   --block-bevel: 2px;
   --block-lip: 4px;

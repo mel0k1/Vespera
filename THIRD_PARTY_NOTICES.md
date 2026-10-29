@@ -7,15 +7,9 @@ developers, with one upstream fix applied
 ([gfx-rs/wgpu#10124](https://github.com/gfx-rs/wgpu/pull/10124)). It is licensed under MIT or
 Apache-2.0; both licenses are in that folder (`LICENSE.MIT`, `LICENSE.APACHE`).
 
-## Pixelify Sans
+## Lucide
 
-`crates/horizon-theme/fonts/PixelifySans-*.ttf` is [Pixelify Sans](https://github.com/eifetx/Pixelify-Sans)
-by The Pixelify Sans Project Authors, licensed under the SIL Open Font License 1.1
-(`crates/horizon-theme/fonts/OFL-PixelifySans.txt`).
-
-## Pixelarticons
-
-`crates/horizon-theme/icons/pixel/*.svg` are icons from
-[Pixelarticons](https://github.com/halfmage/pixelarticons) by Gerrit Halfmann, under the MIT
-license (`crates/horizon-theme/icons/pixel/LICENSE-pixelarticons.txt`). `star.svg` is Horizon's own, drawn on
-the same grid.
+`crates/horizon-theme/icons/lucide/*.svg` are icons from
+[Lucide](https://github.com/lucide-icons/lucide), Copyright (c) for portions held by Cole Bemis
+2013-2023 as part of Feather (MIT), all other copyright the Lucide Contributors, under the ISC
+license (`crates/horizon-theme/icons/lucide/LICENSE-lucide.txt`).

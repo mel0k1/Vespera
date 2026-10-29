@@ -1,7 +1,7 @@
 //! The launcher's view of Horizon's design tokens (`crates/horizon-theme`, described in
 //! `docs/design-system.md`): the blocky look it shares with the website ("Blocks"), stone-dark or
-//! lavender-light with Vespera's twilight violet, Pixelify Sans for headings and controls, Geist and Geist
-//! Mono for text (all bundled, SIL Open Font License).
+//! lavender-light with Vespera's twilight violet, Geist and Geist Mono for everything (both bundled,
+//! SIL Open Font License).
 use gpui::{rgb, Hsla, WindowAppearance};
 use horizon_theme as tokens;
 use std::time::Duration;
@@ -11,7 +11,6 @@ use vespera_launcher::themes::Accent;
 pub use tokens::{Step, BODY, CAPTION, DISPLAY, HEADING, LABEL, MICRO, TITLE, UI, WORDMARK};
 pub const FONT: &str = tokens::FONT;
 pub const MONO: &str = tokens::MONO;
-pub const PIXEL: &str = tokens::PIXEL;
 
 pub use tokens::{BLOCK_BEVEL as BEVEL, BLOCK_LIP as LIP};
 /// Shapes and controls, shared with the game's menus and the website.

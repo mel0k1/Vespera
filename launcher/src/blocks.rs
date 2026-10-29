@@ -1,6 +1,6 @@
-//! The blocky look's parts (`docs/design-system.md`, "Blocks"): pixel type, pixel icons, panels
-//! with a dark outline, a light bevel on top and a darker lip below, sunk wells, badges, the
-//! inventory tabs, and the slots that hold icons downloaded at run time.
+//! The blocky look's parts (`docs/design-system.md`, "Blocks"): the display type, the icons,
+//! panels with a dark outline, a light bevel on top and a darker lip below, sunk wells, badges,
+//! the inventory tabs, and the slots that hold icons downloaded at run time.
 use crate::theme::{self, Theme};
 use gpui::{
     div, img, prelude::*, px, svg, AnyElement, App, ClickEvent, Div, FontWeight, Hsla, ImageSource,
@@ -36,10 +36,9 @@ pub fn icon(name: &'static str, size: f32, color: Hsla) -> Svg {
         .text_color(color)
 }
 
-/// Text in the pixel face: headings, navigation, buttons, badges.
+/// Text in the display face: headings, navigation, buttons, badges (Geist, a touch tighter).
 pub fn pixel(size: f32, weight: FontWeight) -> Div {
     div()
-        .font_family(theme::PIXEL)
         .font_weight(weight)
         .text_size(px(size))
         .line_height(px((size * 1.2).round()))

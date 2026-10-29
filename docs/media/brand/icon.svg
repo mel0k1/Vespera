@@ -1,10 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-  <title>Horizon</title>
+  <title>Vespera</title>
   <clipPath id="tile"><rect width="16" height="16" rx="3.5"/></clipPath>
   <g clip-path="url(#tile)">
     <rect width="16" height="16" fill="#16181f"/>
-    <g fill="#ecedf3"><rect x="4" y="3" width="2" height="4"/><rect x="10" y="3" width="2" height="4"/></g>
-    <g fill="#ecedf3" opacity=".36"><rect x="4" y="8" width="2" height="4"/><rect x="10" y="8" width="2" height="4"/></g>
-    <rect y="7" width="16" height="1" fill="#9a86ff"/>
+    <path d="M8.44 2.41 9.03 3.58 Q9.69 4.57 10.5 5.5 Q11.38 6.27 12.43 6.98 Q13.52 7.53 14.8 8 Z" fill="#7c5cff"/>
+    <path d="M12.62 2.59 12.71 2.77 Q12.81 2.92 12.94 3.06 Q13.07 3.18 13.23 3.29 Q13.4 3.38 13.6 3.45 Z" fill="#b9a8ff" transform="rotate(45 12.55 3.45)"/>
   </g>
 </svg>

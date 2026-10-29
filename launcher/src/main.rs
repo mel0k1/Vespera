@@ -30,7 +30,6 @@ mod mods_project;
 mod multiplayer_page;
 mod owner_page;
 mod packs_page;
-mod partner;
 mod perf;
 mod screenshots_page;
 mod scrollbar;
@@ -314,32 +313,6 @@ impl Launcher {
                 .timer(Duration::from_millis(80))
                 .await;
             if this.update(cx, |this, cx| this.drain(cx)).is_err() {
-                break;
-            }
-        })
-        .detach();
-        // Counts the time the sidebar's partner banner is on screen, until it may be hidden.
-        cx.spawn(async move |this, cx| loop {
-            cx.background_executor()
-                .timer(Duration::from_secs(10))
-                .await;
-            let counting = this.update(cx, |this, cx| {
-                let s = &mut this.settings;
-                if s.partner_hidden || s.partner_seen_secs >= partner::SEEN_BEFORE_HIDE {
-                    return false;
-                }
-                if this.page != Page::Servers {
-                    s.partner_seen_secs += 10;
-                    if s.partner_seen_secs % 60 == 0
-                        || s.partner_seen_secs >= partner::SEEN_BEFORE_HIDE
-                    {
-                        s.save();
-                        cx.notify();
-                    }
-                }
-                true
-            });
-            if !matches!(counting, Ok(true)) {
                 break;
             }
         })
@@ -1293,17 +1266,17 @@ fn hover_layer(id: &SharedString, color: Hsla, radius: f32, bleed: f32) -> AnyEl
     layer.into_any_element()
 }
 
-/// Text set in one step of the type scale: headings (heading, title, display) in the pixel face.
+/// Text set in one step of the type scale: headings heavier than the body, all in Geist.
 fn text(step: theme::Step) -> Div {
     let d = div().text_size(px(step.px)).line_height(px(step.line_px()));
     let d = if step.mono {
         d.font_family(theme::MONO)
     } else if step.px >= theme::HEADING.px {
-        d.font_family(theme::PIXEL)
+        d.font_weight(FontWeight::SEMIBOLD)
     } else {
         d
     };
-    if step.weight >= 500 {
+    if step.weight >= 500 && step.px < theme::HEADING.px {
         d.font_weight(FontWeight::MEDIUM)
     } else {
         d
@@ -1320,35 +1293,12 @@ fn version_tag(tag: &str) -> Div {
         .child(tag.trim_start_matches('v').to_string())
 }
 
-/// Horizon's mark: two stems, their reflection below, and the horizon across in the accent.
+/// Vespera's mark: the evening star, in the accent.
 fn mark(size: f32, t: &Theme) -> Div {
-    let u = size / 16.;
-    let stem = |x: f32, y: f32, color: Hsla| {
-        div()
-            .absolute()
-            .left(px(x * u))
-            .top(px(y * u))
-            .w(px(2. * u))
-            .h(px(4. * u))
-            .bg(color)
-    };
     div()
-        .relative()
         .flex_none()
         .size(px(size))
-        .child(stem(4., 3., t.ink))
-        .child(stem(10., 3., t.ink))
-        .child(stem(4., 8., t.ink.opacity(0.36)))
-        .child(stem(10., 8., t.ink.opacity(0.36)))
-        .child(
-            div()
-                .absolute()
-                .left(px(u))
-                .top(px(7. * u))
-                .w(px(14. * u))
-                .h(px(u))
-                .bg(t.accent),
-        )
+        .child(blocks::icon("vespera-star", size, t.accent))
 }
 
 /// The last thing the player did was press Tab: focused controls show a ring (a click focuses them
@@ -1403,7 +1353,6 @@ fn button(
         .justify_center()
         .h(px(theme::CONTROL))
         .px(px(14.))
-        .font_family(theme::PIXEL)
         .text_size(px(15.))
         .font_weight(FontWeight::MEDIUM)
         .cursor_pointer()
@@ -1489,7 +1438,7 @@ fn switch(id: impl Into<SharedString>, on: bool, t: &Theme) -> Stateful<Div> {
         )
 }
 
-/// A section's title inside a page: a pixel icon in the accent and the name in the pixel face.
+/// A section's title inside a page: an icon in the accent and the name in the display face.
 fn section_title(label: &'static str, icon: &'static str, t: &Theme) -> Div {
     div()
         .flex()
@@ -1531,7 +1480,6 @@ fn segments<T: Copy + PartialEq + 'static>(
                 .h(px(theme::SEGMENT))
                 .px(px(14.))
                 .pb(px(2.))
-                .font_family(theme::PIXEL)
                 .text_size(px(14.))
                 .font_weight(FontWeight::MEDIUM)
                 .cursor_pointer()
@@ -1562,7 +1510,7 @@ fn disabled(b: Stateful<Div>) -> Stateful<Div> {
     b.opacity(theme::DISABLED).cursor_default().tab_stop(false)
 }
 
-/// A page's title in the pixel face and one line on what it is for.
+/// A page's title in the display face and one line on what it is for.
 fn page_header(title: &str, description: &str, t: &Theme) -> Div {
     div()
         .flex()
@@ -1581,7 +1529,7 @@ fn page_header(title: &str, description: &str, t: &Theme) -> Div {
         )
 }
 
-/// One row of a list, as its own panel: a name in the pixel face with an optional detail under
+/// One row of a list, as its own panel: a name in the display face with an optional detail under
 /// it, then a value or a control on the right. Rows were numbered in the quiet look; `_n` keeps
 /// the call sites as they are.
 fn index_row(
@@ -1893,7 +1841,7 @@ impl Launcher {
 
     /// The sidebar: Horizon and the imported modpacks, the player's servers, then the
     /// launcher's own update, the community links and its version.
-    fn sidebar(&mut self, window: &Window, cx: &mut Context<Self>) -> Stateful<Div> {
+    fn sidebar(&mut self, _window: &Window, cx: &mut Context<Self>) -> Stateful<Div> {
         let t = self.theme;
         self.load_packs();
         let heading = |label: String| {
@@ -1943,7 +1891,6 @@ impl Launcher {
                 cx.notify();
             }));
         let items = self.instance_items(heading, cx);
-        let mut rows = items.len();
         let list = div()
             .flex()
             .flex_col()
@@ -1959,8 +1906,6 @@ impl Launcher {
         if !servers.is_empty() {
             list = list.child(heading(tr("SERVERS").into()));
         }
-        rows += servers.len();
-        let headings = 1 + usize::from(!servers.is_empty());
         for e in servers {
             let up = self.servers.is_up(&e.dir);
             let open = self.page == Page::Servers && self.servers.open.as_ref() == Some(&e.dir);
@@ -2049,44 +1994,6 @@ impl Launcher {
                 )
             }
             _ => {}
-        }
-        // Sculk's card above the links: seen without scrolling, on every page but Servers, which shows
-        // its wide banner. Tall where the sidebar has the height for it besides its rows (about 60
-        // high each, under headings of about 40) and the links, compact otherwise. After a while on
-        // screen a "Hide" beside its label puts it away for good.
-        if self.page != Page::Servers && !self.settings.partner_hidden {
-            let free = f32::from(window.viewport_size().height)
-                - theme::TOPBAR
-                - 40. * headings as f32
-                - 60. * rows as f32
-                - 110.;
-            let mut side = div().relative().mb(px(8.)).child(partner::card(
-                "partner-side",
-                theme::SIDEBAR - 20.,
-                free < partner::TALL_HEIGHT,
-                &t,
-            ));
-            if self.settings.partner_seen_secs >= partner::SEEN_BEFORE_HIDE {
-                let hide = div()
-                    .id("partner-hide")
-                    .absolute()
-                    .top(px(0.))
-                    .right(px(0.))
-                    .cursor_pointer()
-                    .child(
-                        text(theme::MICRO)
-                            .text_color(t.muted)
-                            .hover(move |s| s.text_color(t.ink))
-                            .child(tr("HIDE")),
-                    )
-                    .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
-                        this.settings.partner_hidden = true;
-                        this.settings.save();
-                        cx.notify();
-                    }));
-                side = side.child(keyboard(hide, &t));
-            }
-            foot = foot.child(side);
         }
         if !self.links.sponsor.is_empty() {
             foot = foot.child(link(
@@ -4216,7 +4123,7 @@ impl Render for Launcher {
             let gone = 1. - ease_out_cubic(reveal / 0.6);
             let word = div()
                 .flex()
-                .font_family(theme::PIXEL)
+                .font_family(theme::FONT)
                 .text_size(px(theme::WORDMARK.px * 0.5))
                 .line_height(px(theme::WORDMARK.px * 0.5))
                 .font_weight(FontWeight::BOLD)
@@ -4378,9 +4285,6 @@ fn main() {
                     Cow::Borrowed(horizon_theme::fonts::GEIST_MEDIUM),
                     Cow::Borrowed(horizon_theme::fonts::GEIST_SEMIBOLD),
                     Cow::Borrowed(horizon_theme::fonts::GEIST_MONO),
-                    Cow::Borrowed(horizon_theme::fonts::PIXEL_MEDIUM),
-                    Cow::Borrowed(horizon_theme::fonts::PIXEL_SEMIBOLD),
-                    Cow::Borrowed(horizon_theme::fonts::PIXEL_BOLD),
                 ])
                 .expect("bundled fonts");
             cx.bind_keys(key_bindings());

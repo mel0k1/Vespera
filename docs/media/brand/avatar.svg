@@ -1,8 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <title>Vespera</title>
   <rect width="16" height="16" fill="#16181f"/>
-  <g transform="translate(2.4 2.4) scale(.7)">
-    <g fill="#ecedf3"><rect x="4" y="3" width="2" height="4"/><rect x="10" y="3" width="2" height="4"/></g>
-    <g fill="#ecedf3" opacity=".36"><rect x="4" y="8" width="2" height="4"/><rect x="10" y="8" width="2" height="4"/></g>
-  </g>
-  <rect y="7.3" width="16" height=".7" fill="#9a86ff"/>
+  <path d="M8.33 3.81 8.77 4.68 Q9.26 5.42 9.88 6.12 Q10.53 6.7 11.32 7.23 Q12.14 7.65 13.1 8 Z" fill="#7c5cff"/>
 </svg>

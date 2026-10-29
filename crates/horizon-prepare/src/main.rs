@@ -81,7 +81,12 @@ fn main() -> ExitCode {
         matches!(
             a.to_str(),
             Some(
-                "sounds" | "panorama" | "fonts" | "packs" | "languages" | "compile-exporters"
+                "sounds"
+                    | "panorama"
+                    | "fonts"
+                    | "packs"
+                    | "languages"
+                    | "compile-exporters"
                     | "import"
             )
         )
@@ -149,7 +154,9 @@ fn main() -> ExitCode {
     let result = match assets.as_deref().and_then(|a| a.to_str()) {
         Some("compile-exporters") => horizon_prepare::compile_exporters(&options, &log)
             .inspect(|dir| log(&dir.display().to_string())),
-        Some("import") => horizon_prepare::import_files(&options, &log).map(|_| std::path::PathBuf::new()),
+        Some("import") => {
+            horizon_prepare::import_files(&options, &log).map(|_| std::path::PathBuf::new())
+        }
         Some("sounds") => {
             horizon_prepare::sounds(&options.root, options.minecraft_dir.as_deref(), &log)
         }

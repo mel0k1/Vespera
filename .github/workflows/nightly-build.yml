@@ -135,6 +135,9 @@ jobs:
       nightly: ${{ needs.pick.outputs.nightly }}
       developer_id: false
       trusted: false  # it can hold unreviewed pull requests: their own cache key, never saved, not the release runner
+      # The fork has no runner with the maintainer's imported Minecraft: fetch the pinned release
+      # from Mojang's public CDN instead (tools/ci/bootstrap-vanilla.sh), and no smoke test.
+      vanilla_data: false
 
   sign:
     needs: [pick, build]
@@ -159,8 +162,11 @@ jobs:
           RELEASE_SIGNING_KEY_NEXT: ${{ secrets.RELEASE_SIGNING_KEY_NEXT }}
           EPHEMERAL: ${{ needs.pick.outputs.dry_run == 'true' && 'yes' || '' }}
         run: |
-          bash tools/ci/sign_release.sh nightly dist/vespera-linux-x86_64.tar.gz dist/vespera-windows-x64.zip \
-            dist/vespera-macos-arm64.zip dist/horizon-server-linux-x86_64.tar.gz dist/horizon-source.tar.gz
+          files=(dist/vespera-linux-x86_64.tar.gz dist/vespera-windows-x64.zip)
+          # A fork (no maintainer's runner) builds no macOS zip: leave it out of the checksums.
+          [[ -f dist/vespera-macos-arm64.zip ]] && files+=(dist/vespera-macos-arm64.zip)
+          files+=(dist/horizon-server-linux-x86_64.tar.gz dist/horizon-source.tar.gz)
+          bash tools/ci/sign_release.sh nightly "${files[@]}"
       - uses: actions/upload-artifact@v4
         with:
           name: signature
@@ -209,14 +215,17 @@ jobs:
           python3 tools/ci/nightly.py rotate
           signature=(); [[ -f dist/SHA256SUMS.sig ]] && signature=(dist/SHA256SUMS.sig)
           # A pre-release, never GitHub's latest: launchers on the release channel never see it.
+          # A fork (no maintainer's runner) has no macOS zip and no smoke report: omit both.
+          mac=(); [[ -f dist/vespera-macos-arm64.zip ]] && mac=("dist/vespera-macos-arm64.zip#Nightly game files: macOS (vespera-macos-arm64.zip)")
+          smoke=(); [[ -f dist/smoke-test.json ]] && smoke=(dist/smoke-test.json)
           gh release create nightly --prerelease --latest=false --target "$SHA" \
             --title "Nightly $DATE · ${SHA:0:7}" --notes-file dist/nightly-notes.md \
             "dist/vespera-linux-x86_64.tar.gz#Nightly game files: Linux (vespera-linux-x86_64.tar.gz)" \
             "dist/vespera-windows-x64.zip#Nightly game files: Windows (vespera-windows-x64.zip)" \
-            "dist/vespera-macos-arm64.zip#Nightly game files: macOS (vespera-macos-arm64.zip)" \
+            "${mac[@]}" \
             "dist/horizon-server-linux-x86_64.tar.gz#Nightly dedicated server for Linux (horizon-server-linux-x86_64.tar.gz)" \
             "dist/horizon-source.tar.gz#Source of this Nightly, commit ${SHA:0:7} (horizon-source.tar.gz; kept for good as the tag $SOURCE_TAG)" \
-            dist/SHA256SUMS "${signature[@]}" dist/smoke-test.json
+            dist/SHA256SUMS "${signature[@]}" "${smoke[@]}"
           python3 tools/ci/nightly.py keep-source "$SHA" "$DATE"
           python3 tools/ci/nightly.py prune --days 7
       - name: Dry run, the nightly that would be published

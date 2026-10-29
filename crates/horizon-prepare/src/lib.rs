@@ -427,6 +427,24 @@ pub fn compile_exporters(options: &Options, log: Log) -> Result<PathBuf, String>
     prepare_impl(options, log, true)
 }
 
+/// Imports the pinned game files into this root (`--import`): what `--prepare` does first,
+/// without preparing any resources. CI without the maintainer's own imported Minecraft uses
+/// it (`tools/ci/bootstrap-vanilla.sh`) after fetching the pinned release from Mojang's
+/// public CDN, so `compile-exporters` finds the artifacts in `.local/minecraft`.
+pub fn import_files(options: &Options, log: Log) -> Result<(), String> {
+    let lock = artifacts::Lock::read(&options.root)?;
+    if artifacts::reuse_verified(&options.root, log)?.is_none() {
+        artifacts::import(
+            &options.root,
+            &lock,
+            options.minecraft_dir.as_deref(),
+            options.server_jar.as_deref(),
+            log,
+        )?;
+    }
+    Ok(())
+}
+
 fn prepare_impl(options: &Options, log: Log, compile_only: bool) -> Result<PathBuf, String> {
     let root = &std::path::absolute(&options.root)
         .map_err(|e| format!("{}: {e}", options.root.display()))?;

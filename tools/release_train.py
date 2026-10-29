@@ -298,10 +298,11 @@ def smoke_problem(report):
     return None
 
 
-def gate(report, blockers):
+def gate(report, blockers, smoke_required=True):
     """Why a built game release must not be published, or None: it is published as the latest at once, so its
-    smoke test must have passed and no release-blocker may be open."""
-    problems = [problem for problem in [smoke_problem(report)] if problem]
+    smoke test must have passed and no release-blocker may be open. A fork without the maintainer's runner
+    runs no smoke test (smoke_required=False, no report): the vanilla harnesses on main stand in for it."""
+    problems = [problem for problem in ([smoke_problem(report)] if smoke_required else []) if problem]
     problems += [f"release-blocker #{number} is open" for number in blockers]
     return "; ".join(problems) or None
 
@@ -501,15 +502,19 @@ def main():
     parser.add_argument("--out", type=Path, help="notes: write title.txt and body.md here")
     parser.add_argument("--now", help="the time to decide at (ISO 8601; default now)")
     parser.add_argument("--smoke", type=Path, help="gate: the release smoke test's report (smoke-test.json)")
+    parser.add_argument("--no-smoke", action="store_true",
+                        help="gate: no smoke test ran (a fork without the maintainer's runner); publish without one")
     parser.add_argument("--blockers", action="store_true", help="gate: also check that no release-blocker is open")
     args = parser.parse_args()
     now = dt.datetime.fromisoformat(args.now) if args.now else dt.datetime.now(dt.timezone.utc)
 
     if args.command == "gate":
         report = json.loads(args.smoke.read_text()) if args.smoke and args.smoke.exists() else None
-        problem = gate(report, open_blockers() if args.blockers else [])
-        line = f"Not publishing: {problem}" if problem else "Ready to publish: the smoke test passed" + (
-            " and no release-blocker is open" if args.blockers else "")
+        required = not args.no_smoke
+        problem = gate(report, open_blockers() if args.blockers else [], smoke_required=required)
+        line = f"Not publishing: {problem}" if problem else "Ready to publish: " + (
+            "the smoke test passed" if required and report is not None else "no smoke test ran (fork runners)"
+        ) + (" and no release-blocker is open" if args.blockers else "")
         print(json.dumps(report) if report else "", line, sep="\n")
         if os.environ.get("GITHUB_STEP_SUMMARY"):
             with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:

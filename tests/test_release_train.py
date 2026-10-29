@@ -175,6 +175,9 @@ class ReleaseTrainTests(unittest.TestCase):
         self.assertEqual(train.gate(None, []), "no smoke-test.json: the release smoke test did not run")
         self.assertEqual(train.gate(None, [4]),
                          "no smoke-test.json: the release smoke test did not run; release-blocker #4 is open")
+        # A fork runs no smoke test at all: the harnesses on main stand in for it, blockers still hold.
+        self.assertIsNone(train.gate(None, [], smoke_required=False))
+        self.assertEqual(train.gate(None, [4], smoke_required=False), "release-blocker #4 is open")
         self.assertEqual(train.smoke_problem({**drew, "error": "device lost"}), "the smoke run failed: device lost")
         for broken in ({**drew, "frames": 1499}, {**drew, "chunks": 0}, {**drew, "meshed_sections": 0},
                        {**drew, "player": None}, {}):

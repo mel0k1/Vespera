@@ -32,15 +32,25 @@ on:
         description: Sign the macOS programs with Developer ID and notarize the zip (the runner's keychain)
         type: boolean
         default: true
+      vanilla_data:
+        # The self-hosted runners hold the maintainer's own pinned Minecraft, imported once (vanilla-data.sh).
+        # Forks have none: vanilla_data=false fetches the pinned release from Mojang's public CDN
+        # (tools/ci/bootstrap-vanilla.sh) on a GitHub runner instead, compiles the exporters on Linux, and
+        # runs no smoke test (the mac build has no prepared resources to draw a world with).
+        description: The runners hold the maintainer's imported Minecraft (self-hosted); false fetches it
+        type: boolean
+        default: true
 permissions:
   contents: read
 jobs:
   exporters:
-    # This runner holds the maintainer's own pinned Minecraft jars. Only our classes leave it. An untrusted build
-    # goes to the Mac mini runner that already runs pull requests' parity jobs (macOS + horizon-game:
-    # ludovics-mac-mini), never the release runner (MAC_RUNNER: ludovics-mac-mini-release) nor parity-main's.
-    runs-on: ${{ inputs.trusted && vars.MAC_RUNNER || fromJSON('["self-hosted", "macOS", "horizon-game"]') }}
-    # Three full preparations (two isolated, one batched) besides the compile.
+    # With the maintainer's own pinned Minecraft (vanilla_data), this runner holds it: only our classes
+    # leave it. An untrusted build goes to the Mac mini runner that already runs pull requests' parity
+    # jobs (macOS + horizon-game: ludovics-mac-mini), never the release runner (MAC_RUNNER:
+    # ludovics-mac-mini-release) nor parity-main's. A fork (vanilla_data=false) fetches the pinned
+    # release from Mojang's public CDN on a GitHub runner and compiles the exporters on Linux instead.
+    runs-on: ${{ inputs.vanilla_data && (inputs.trusted && vars.MAC_RUNNER || fromJSON('["self-hosted", "macOS", "horizon-game"]')) || 'ubuntu-22.04' }}
+    # Three full preparations (two isolated, one batched) besides the compile; the fork's import is lighter.
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -49,10 +59,20 @@ jobs:
           persist-credentials: false
           clean: true
       - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-java@v4
+        if: ${{ !inputs.vanilla_data }}
+        with:
+          distribution: temurin
+          java-version: 25
       - run: bash tools/ci/runner-env.sh
+        if: ${{ inputs.vanilla_data }}
         env:
           HORIZON_NO_SCCACHE: ${{ inputs.trusted && '1' || '' }}
       - run: bash tools/ci/vanilla-data.sh
+        if: ${{ inputs.vanilla_data }}
+      - name: The pinned release from Mojang's public CDN (forks)
+        if: ${{ !inputs.vanilla_data }}
+        run: bash tools/ci/bootstrap-vanilla.sh
       - name: Compile and validate original exporters against the pinned jars
         shell: bash
         run: |

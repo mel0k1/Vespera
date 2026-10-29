@@ -16,6 +16,7 @@ const HELP: &str = "\
 horizon-prepare: prepare Horizon's resources from your own Minecraft Java Edition
 
 Usage: horizon-prepare [--prepare] [--server-jar PATH] [--minecraft-dir PATH] [--root PATH]
+       horizon-prepare import [--minecraft-dir PATH] [--server-jar PATH] [--root PATH]
        horizon-prepare compile-exporters [--root PATH]
        horizon-prepare sounds [--minecraft-dir PATH] [--root PATH]
        horizon-prepare panorama [--minecraft-dir PATH] [--root PATH]
@@ -35,6 +36,10 @@ Needs Minecraft played once from the official launcher, and Java of the version
 research-lock.json pins. Releases use a runtime; development or changed exporters need a JDK.
 compile-exporters builds and validates a release bundle from the already imported pinned jars.
 The resources go to <root>/.local/horizon-client/<version>; pass that to horizon-client --resources.
+
+horizon-prepare import brings in the pinned jars and libraries only, checked against
+research-lock.json (no resources, no Java): what CI does after downloading the pinned
+release from Mojang's CDN, before compile-exporters.
 
 horizon-prepare panorama repairs the classic menu background in existing resources without Java.
 horizon-prepare fonts adds the GNU Unifont glyphs (characters the bitmap fonts lack) the same way.
@@ -75,7 +80,10 @@ fn main() -> ExitCode {
     let assets = args.next_if(|a| {
         matches!(
             a.to_str(),
-            Some("sounds" | "panorama" | "fonts" | "packs" | "languages" | "compile-exporters")
+            Some(
+                "sounds" | "panorama" | "fonts" | "packs" | "languages" | "compile-exporters"
+                    | "import"
+            )
         )
     });
     while let Some(arg) = args.next() {
@@ -96,7 +104,12 @@ fn main() -> ExitCode {
             }
         };
         let parsed = match flag.as_str() {
-            "--prepare" | "--server-jar" if assets.is_some() => {
+            "--prepare" if assets.is_some() => {
+                Err(format!("{flag} is for preparing, not for asset copying"))
+            }
+            "--server-jar"
+                if !matches!(assets.as_deref().and_then(|a| a.to_str()), Some("import")) =>
+            {
                 Err(format!("{flag} is for preparing, not for asset copying"))
             }
             "--prepare" if inline.is_none() => {
@@ -136,6 +149,7 @@ fn main() -> ExitCode {
     let result = match assets.as_deref().and_then(|a| a.to_str()) {
         Some("compile-exporters") => horizon_prepare::compile_exporters(&options, &log)
             .inspect(|dir| log(&dir.display().to_string())),
+        Some("import") => horizon_prepare::import_files(&options, &log).map(|_| std::path::PathBuf::new()),
         Some("sounds") => {
             horizon_prepare::sounds(&options.root, options.minecraft_dir.as_deref(), &log)
         }

@@ -85,12 +85,15 @@ jobs:
   build:
     needs: decide
     if: needs.decide.outputs.release == 'true'
-    # Every platform's archive, and macOS's smoke test (game-build.yml).
+    # Every platform's archive, and macOS's smoke test (game-build.yml). The fork holds no runner with
+    # the maintainer's imported Minecraft: vanilla_data=false fetches the pinned release from Mojang's
+    # public CDN instead (game-build.yml, tools/ci/bootstrap-vanilla.sh) and runs no smoke test.
     uses: ./.github/workflows/game-build.yml
     with:
       ref: ${{ needs.decide.outputs.head }}
       version: ${{ needs.decide.outputs.version }}
       trusted: true  # main: the release runner, the release cache, no shared sccache
+      vanilla_data: false
 
   sign:
     needs: [decide, build]
@@ -118,8 +121,11 @@ jobs:
           EPHEMERAL: ${{ needs.decide.outputs.dry_run == 'true' && 'yes' || '' }}
           TAG: ${{ needs.decide.outputs.tag }}
         run: |
-          bash tools/ci/sign_release.sh "$TAG" dist/vespera-linux-x86_64.tar.gz dist/vespera-windows-x64.zip \
-            dist/vespera-macos-arm64.zip dist/horizon-server-linux-x86_64.tar.gz
+          files=(dist/vespera-linux-x86_64.tar.gz dist/vespera-windows-x64.zip)
+          # macOS's smoke test needs the maintainer's runner; a fork's release may not carry its zip.
+          [[ -f dist/vespera-macos-arm64.zip ]] && files+=(dist/vespera-macos-arm64.zip)
+          files+=(dist/horizon-server-linux-x86_64.tar.gz)
+          bash tools/ci/sign_release.sh "$TAG" "${files[@]}"
       - uses: actions/upload-artifact@v4
         with:
           name: signature
@@ -164,12 +170,15 @@ jobs:
           cargo run --locked --quiet -p horizon-release-sign -- verify --tag "$TAG" --publishing "${key[@]}" dist
       - name: Ready to publish (the smoke test passed, no release-blocker is open)
         # Right before publishing: an issue labelled while the builds ran still holds this release. A dry run only
-        # reports what a real run would do.
+        # reports what a real run would do. A fork without the maintainer's runner has no smoke report:
+        # it publishes without one (--no-smoke), the vanilla harnesses on main stand in for it.
         env:
           GH_TOKEN: ${{ github.token }}
           DRY_RUN: ${{ needs.decide.outputs.dry_run }}
         run: |
-          if ! python3 tools/release_train.py gate --kind game --smoke dist/smoke-test.json --blockers; then
+          smoke=(--smoke dist/smoke-test.json)
+          [[ -f dist/smoke-test.json ]] || smoke=(--no-smoke)
+          if ! python3 tools/release_train.py gate --kind game "${smoke[@]}" --blockers; then
             [[ "$DRY_RUN" == true ]] || { echo "::error::Nothing published"; exit 1; }
             echo "::warning::A real run would publish nothing"
           fi
@@ -183,13 +192,15 @@ jobs:
           # The release and the latest at once: there is one channel (docs/release-flow.md). Each archive gets a
           # label (file#label), which GitHub's page shows instead of the file name, so nobody takes the game's
           # files for the download (#1647). Launchers, servers and install.sh match the name, which stays.
+          mac=(); [[ -f dist/vespera-macos-arm64.zip ]] && mac=("dist/vespera-macos-arm64.zip#Game files the launcher installs: macOS (vespera-macos-arm64.zip)")
+          smoke=(); [[ -f dist/smoke-test.json ]] && smoke=(dist/smoke-test.json)
           gh release create "$TAG" --target "${{ needs.decide.outputs.head }}" --title "$(cat notes/title.txt)" \
             --notes-file notes/body.md --latest \
             "dist/vespera-linux-x86_64.tar.gz#Game files the launcher installs: Linux (vespera-linux-x86_64.tar.gz)" \
             "dist/vespera-windows-x64.zip#Game files the launcher installs: Windows (vespera-windows-x64.zip)" \
-            "dist/vespera-macos-arm64.zip#Game files the launcher installs: macOS (vespera-macos-arm64.zip)" \
+            "${mac[@]}" \
             "dist/horizon-server-linux-x86_64.tar.gz#Dedicated server for Linux (horizon-server-linux-x86_64.tar.gz)" \
-            dist/SHA256SUMS "${signature[@]}" dist/smoke-test.json
+            dist/SHA256SUMS "${signature[@]}" "${smoke[@]}"
       - name: Dry run, the release that would be published
         if: needs.decide.outputs.dry_run == 'true'
         run: |

@@ -112,7 +112,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: dist
-          pattern: horizon-*
+          # The game archives are vespera-*, the server and source bundles horizon-*.
+          pattern: |
+            vespera-*
+            horizon-*
           merge-multiple: true
       - name: Sign the checksums (SHA256SUMS, SHA256SUMS.sig)
         env:

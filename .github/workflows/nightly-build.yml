@@ -154,10 +154,13 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: dist
-          # The game archives are vespera-*, the server and source bundles horizon-*.
-          pattern: |
-            vespera-*
-            horizon-*
+          pattern: vespera-*   # the game archives
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: horizon-*   # the server and source bundles
+          merge-multiple: true
           merge-multiple: true
       - name: Sign the checksums (SHA256SUMS, SHA256SUMS.sig) for the nightly channel
         env:
